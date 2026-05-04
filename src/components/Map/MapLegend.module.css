@@ -1,0 +1,119 @@
+/* ─── RTL: legend moves to the right side ─── */
+:global([dir='rtl']) .legend {
+  left: auto;
+  right: 1rem;
+}
+
+.legend {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  min-width: 190px;
+}
+
+@media (max-width: 768px) {
+  .legend {
+    position: static;
+    bottom: auto;
+    left: auto;
+    min-width: unset;
+    width: 100%;
+    border-radius: 0;
+    border-top: 1px solid var(--color-border);
+    box-shadow: none;
+    background: #ffffff;
+  }
+}
+
+.title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text);
+  margin: 0 0 0.5rem;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.itemLabel {
+  font-size: 0.8125rem;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+/* Shape base */
+.symbol {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+/* Circle — warming */
+.circle {
+  border-radius: 50%;
+}
+
+/* Diamond — cooling */
+.diamond {
+  transform: rotate(45deg);
+  border-radius: 1px;
+  width: 11px;
+  height: 11px;
+  margin: 0 1.5px;
+}
+
+/* Square — dual */
+.square {
+  border-radius: 2px;
+}
+
+/* Triangle — inactive (CSS triangle via borders) */
+.triangle {
+  width: 0;
+  height: 0;
+  background: transparent !important;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 14px solid currentColor;
+}
+
+/* Colors */
+.colorWarming {
+  background-color: #d14b00;
+  color: #d14b00;
+}
+
+.colorCooling {
+  background-color: #1565c0;
+  color: #1565c0;
+}
+
+.colorDual {
+  background-color: #6a1b9a;
+  color: #6a1b9a;
+}
+
+.colorInactive {
+  background-color: #757575;
+  color: #757575;
+}

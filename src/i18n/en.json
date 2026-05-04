@@ -1,0 +1,153 @@
+{
+  "app": {
+    "title": "Douglas County Warming & Cooling Centers",
+    "subtitle": "Find emergency warming and cooling centers near you"
+  },
+  "nav": {
+    "map": "Map",
+    "home": "Home",
+    "staffLogin": "Staff Login",
+    "ariaLabel": "Main navigation"
+  },
+  "header": {
+    "logoAlt": "Douglas County seal"
+  },
+  "skipLink": {
+    "label": "Skip to main content"
+  },
+  "footer": {
+    "copyright": "© {{year}} Douglas County, Nebraska. All rights reserved.",
+    "disclaimer": "Information is subject to change. Call ahead to confirm availability.",
+    "accessibilityStatement": "Accessibility Statement",
+    "contact": "Contact Us",
+    "staffLogin": "Staff Login"
+  },
+  "language": {
+    "select": "Select language",
+    "selectAria": "Select display language",
+    "english": "English",
+    "spanish": "Español",
+    "vietnamese": "Tiếng Việt",
+    "arabic": "العربية",
+    "changed": "Language changed to {{language}}"
+  },
+  "status": {
+    "open": "Open",
+    "closed": "Closed"
+  },
+  "facility": {
+    "name": "Facility Name",
+    "address": "Address",
+    "type": "Type",
+    "hours": "Hours",
+    "phone": "Phone",
+    "email": "Email",
+    "website": "Website",
+    "nearestBusStop": "Nearest Bus Stop",
+    "adaCompliant": "ADA Compliant",
+    "petAccessibility": "Pet Accessibility",
+    "chargingStations": "Charging Stations",
+    "languageServices": "Language Services",
+    "capacity": "Total Capacity",
+    "capacityStatus": "Capacity Status",
+    "hydration": "Hydration",
+    "eligibility": "Eligibility",
+    "spots": "spots",
+    "externalLinkSuffix": "(opens in a new tab)"
+  },
+  "popup": {
+    "close": "Close",
+    "closeAria": "Close details for {{name}}",
+    "sections": {
+      "locationAccess": "Location & Access",
+      "contact": "Contact",
+      "hoursCapacity": "Hours & Capacity",
+      "accessibilityServices": "Accessibility & Services",
+      "eligibility": "Eligibility"
+    }
+  },
+  "nearby": {
+    "heading": "Nearby Facilities",
+    "close": "Close nearby facilities panel",
+    "distanceAria": "{{dist}} away"
+  },
+  "common": {
+    "notAvailable": "Not available",
+    "loading": "Loading…",
+    "error": "An error occurred. Please try again."
+  },
+  "aria": {
+    "externalLink": "Opens in a new tab"
+  },
+  "announcer": {
+    "translating": "Translating content…",
+    "translationComplete": "Translation complete"
+  },
+  "admin": {
+    "login": {
+      "title": "Staff Login",
+      "backToMap": "Back to map",
+      "description": "Sign in to manage facility status",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "Enter your email"
+    },
+    "panel": {
+      "welcome": "Welcome, {{email}}",
+      "signOut": "Sign out",
+      "facilities": "Your Facilities",
+      "warmingActive": "Warming",
+      "coolingActive": "Cooling",
+      "lastUpdated": "Last updated",
+      "never": "Never",
+      "confirmTitle": "Confirm Status Change",
+      "confirmMessage": "Are you sure you want to mark {{name}} as {{status}} for {{type}}?",
+      "confirmYes": "Yes, update",
+      "confirmNo": "Cancel",
+      "updateSuccess": "Facility status updated successfully",
+      "updateError": "Failed to update facility status. Please try again.",
+      "noFacilities": "No facilities are assigned to your account. Contact your administrator.",
+      "loading": "Loading your facilities…",
+      "open": "open",
+      "closed": "closed",
+      "warming": "warming",
+      "cooling": "cooling",
+      "adminNavLabel": "Admin navigation",
+      "unauthorizedAccess": "You do not have permission to access that page."
+    },
+    "users": {
+      "heading": "User Management",
+      "navLink": "User Management",
+      "searchLabel": "Search users",
+      "searchPlaceholder": "Filter by email",
+      "tableEmail": "Email",
+      "tableStatus": "Account Status",
+      "tableFacilities": "Facilities",
+      "tableActions": "Actions",
+      "editAssignments": "Edit Assignments",
+      "editAssignmentsAria": "Edit facility assignments for {{email}}",
+      "facilitiesCount_one": "{{count}} facility",
+      "facilitiesCount_other": "{{count}} facilities",
+      "noResults": "No users match your search.",
+      "loading": "Loading users…",
+      "error": "Failed to load users. Please try again.",
+      "retry": "Retry",
+      "statusConfirmed": "Confirmed",
+      "statusUnconfirmed": "Unconfirmed",
+      "statusForceChange": "Password Reset Required",
+      "statusUnknown": "Unknown"
+    },
+    "modal": {
+      "title": "Manage Facilities — {{email}}",
+      "close": "Close",
+      "searchLabel": "Search facilities",
+      "searchPlaceholder": "Filter by facility name",
+      "noResults": "No facilities match your search.",
+      "facilityListLabel": "Facility assignment list",
+      "assigned": "assigned",
+      "notAssigned": "not assigned",
+      "assignSuccess": "{{facility}} assigned to {{email}}",
+      "removeSuccess": "{{facility}} removed from {{email}}",
+      "assignError": "Failed to update assignment. Please try again."
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "app": {
+    "title": "مراكز التدفئة والتبريد في مقاطعة دوغلاس",
+    "subtitle": "ابحث عن مراكز التدفئة والتبريد الطارئة بالقرب منك"
+  },
+  "nav": {
+    "map": "الخريطة",
+    "home": "الرئيسية",
+    "ariaLabel": "التنقل الرئيسي"
+  },
+  "header": {
+    "logoAlt": "شعار مقاطعة دوغلاس"
+  },
+  "skipLink": {
+    "label": "تخطى إلى المحتوى الرئيسي"
+  },
+  "footer": {
+    "copyright": "© {{year}} مقاطعة دوغلاس، نبراسكا. جميع الحقوق محفوظة.",
+    "disclaimer": "المعلومات قابلة للتغيير. اتصل مسبقاً للتأكد من التوفر.",
+    "accessibilityStatement": "بيان إمكانية الوصول",
+    "contact": "اتصل بنا",
+    "staffLogin": "دخول الموظفين"
+  },
+  "language": {
+    "select": "اختر اللغة",
+    "selectAria": "اختر لغة العرض",
+    "english": "English",
+    "spanish": "Español",
+    "vietnamese": "Tiếng Việt",
+    "arabic": "العربية",
+    "changed": "تم تغيير اللغة إلى {{language}}"
+  },
+  "status": {
+    "open": "مفتوح",
+    "closed": "مغلق"
+  },
+  "facility": {
+    "name": "اسم المركز",
+    "address": "العنوان",
+    "type": "النوع",
+    "hours": "ساعات العمل",
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "website": "الموقع الإلكتروني",
+    "nearestBusStop": "أقرب محطة حافلة",
+    "adaCompliant": "متوافق مع قانون ADA",
+    "petAccessibility": "إمكانية الوصول للحيوانات الأليفة",
+    "chargingStations": "محطات الشحن",
+    "languageServices": "خدمات اللغة",
+    "capacity": "الطاقة الاستيعابية الإجمالية",
+    "capacityStatus": "حالة الطاقة الاستيعابية",
+    "hydration": "الترطيب",
+    "eligibility": "الأهلية",
+    "spots": "أماكن",
+    "externalLinkSuffix": "(يفتح في نافذة جديدة)"
+  },
+  "popup": {
+    "close": "إغلاق",
+    "closeAria": "إغلاق تفاصيل {{name}}",
+    "sections": {
+      "locationAccess": "الموقع والوصول",
+      "contact": "التواصل",
+      "hoursCapacity": "ساعات العمل والطاقة",
+      "accessibilityServices": "إمكانية الوصول والخدمات",
+      "eligibility": "الأهلية"
+    }
+  },
+  "common": {
+    "notAvailable": "غير متوفر",
+    "loading": "جارٍ التحميل…",
+    "error": "حدث خطأ. يرجى المحاولة مرة أخرى."
+  },
+  "aria": {
+    "externalLink": "يفتح في نافذة جديدة"
+  },
+  "announcer": {
+    "translating": "جارٍ ترجمة المحتوى…",
+    "translationComplete": "اكتملت الترجمة"
+  },
+  "admin": {
+    "login": {
+      "title": "دخول الموظفين",
+      "backToMap": "العودة إلى الخريطة",
+      "description": "سجّل الدخول لإدارة حالة المركز",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "أدخل بريدك الإلكتروني"
+    },
+    "panel": {
+      "welcome": "مرحباً، {{email}}",
+      "signOut": "تسجيل الخروج",
+      "facilities": "مراكزك",
+      "warmingActive": "التدفئة",
+      "coolingActive": "التبريد",
+      "lastUpdated": "آخر تحديث",
+      "never": "لم يُحدَّث",
+      "confirmTitle": "تأكيد تغيير الحالة",
+      "confirmMessage": "هل أنت متأكد من وضع علامة {{name}} على أنه {{status}} لـ{{type}}؟",
+      "confirmYes": "نعم، تحديث",
+      "confirmNo": "إلغاء",
+      "updateSuccess": "تم تحديث حالة المركز بنجاح",
+      "updateError": "فشل تحديث حالة المركز. يرجى المحاولة مرة أخرى.",
+      "noFacilities": "لا توجد مراكز مخصصة لحسابك. اتصل بالمسؤول.",
+      "loading": "جارٍ تحميل مراكزك…",
+      "open": "مفتوح",
+      "closed": "مغلق",
+      "warming": "التدفئة",
+      "cooling": "التبريد"
+    }
+  }
+}

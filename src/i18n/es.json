@@ -1,0 +1,153 @@
+{
+  "app": {
+    "title": "Centros de Calefacción y Refrigeración del Condado Douglas",
+    "subtitle": "Encuentre centros de emergencia de calefacción y refrigeración cerca de usted"
+  },
+  "nav": {
+    "map": "Mapa",
+    "home": "Inicio",
+    "staffLogin": "Acceso del Personal",
+    "ariaLabel": "Navegación principal"
+  },
+  "header": {
+    "logoAlt": "Escudo del Condado Douglas"
+  },
+  "skipLink": {
+    "label": "Saltar al contenido principal"
+  },
+  "footer": {
+    "copyright": "© {{year}} Condado Douglas, Nebraska. Todos los derechos reservados.",
+    "disclaimer": "La información está sujeta a cambios. Llame con anticipación para confirmar disponibilidad.",
+    "accessibilityStatement": "Declaración de Accesibilidad",
+    "contact": "Contáctenos",
+    "staffLogin": "Acceso del Personal"
+  },
+  "language": {
+    "select": "Seleccionar idioma",
+    "selectAria": "Seleccionar idioma de visualización",
+    "english": "English",
+    "spanish": "Español",
+    "vietnamese": "Tiếng Việt",
+    "arabic": "العربية",
+    "changed": "Idioma cambiado a {{language}}"
+  },
+  "status": {
+    "open": "Abierto",
+    "closed": "Cerrado"
+  },
+  "facility": {
+    "name": "Nombre del Centro",
+    "address": "Dirección",
+    "type": "Tipo",
+    "hours": "Horario",
+    "phone": "Teléfono",
+    "email": "Correo Electrónico",
+    "website": "Sitio Web",
+    "nearestBusStop": "Parada de Autobús Más Cercana",
+    "adaCompliant": "Cumple con ADA",
+    "petAccessibility": "Accesibilidad para Mascotas",
+    "chargingStations": "Estaciones de Carga",
+    "languageServices": "Servicios de Idiomas",
+    "capacity": "Capacidad Total",
+    "capacityStatus": "Estado de Capacidad",
+    "hydration": "Hidratación",
+    "eligibility": "Elegibilidad",
+    "spots": "lugares",
+    "externalLinkSuffix": "(se abre en una nueva pestaña)"
+  },
+  "popup": {
+    "close": "Cerrar",
+    "closeAria": "Cerrar detalles de {{name}}",
+    "sections": {
+      "locationAccess": "Ubicación y Acceso",
+      "contact": "Contacto",
+      "hoursCapacity": "Horario y Capacidad",
+      "accessibilityServices": "Accesibilidad y Servicios",
+      "eligibility": "Elegibilidad"
+    }
+  },
+  "nearby": {
+    "heading": "Instalaciones Cercanas",
+    "close": "Cerrar panel de instalaciones cercanas",
+    "distanceAria": "a {{dist}}"
+  },
+  "common": {
+    "notAvailable": "No disponible",
+    "loading": "Cargando…",
+    "error": "Ocurrió un error. Por favor, inténtelo de nuevo."
+  },
+  "aria": {
+    "externalLink": "Se abre en una nueva pestaña"
+  },
+  "announcer": {
+    "translating": "Traduciendo contenido…",
+    "translationComplete": "Traducción completa"
+  },
+  "admin": {
+    "login": {
+      "title": "Acceso del Personal",
+      "backToMap": "Volver al mapa",
+      "description": "Inicie sesión para gestionar el estado del centro",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "Ingrese su correo"
+    },
+    "panel": {
+      "welcome": "Bienvenido, {{email}}",
+      "signOut": "Cerrar sesión",
+      "facilities": "Sus Centros",
+      "warmingActive": "Calefacción",
+      "coolingActive": "Refrigeración",
+      "lastUpdated": "Última actualización",
+      "never": "Nunca",
+      "confirmTitle": "Confirmar Cambio de Estado",
+      "confirmMessage": "¿Está seguro de que desea marcar {{name}} como {{status}} para {{type}}?",
+      "confirmYes": "Sí, actualizar",
+      "confirmNo": "Cancelar",
+      "updateSuccess": "Estado del centro actualizado con éxito",
+      "updateError": "Error al actualizar el estado del centro. Por favor, inténtelo de nuevo.",
+      "noFacilities": "No hay centros asignados a su cuenta. Contacte a su administrador.",
+      "loading": "Cargando sus centros…",
+      "open": "abierto",
+      "closed": "cerrado",
+      "warming": "calefacción",
+      "cooling": "refrigeración",
+      "adminNavLabel": "Navegación de administrador",
+      "unauthorizedAccess": "No tiene permiso para acceder a esa página."
+    },
+    "users": {
+      "heading": "Gestión de Usuarios",
+      "navLink": "Gestión de Usuarios",
+      "searchLabel": "Buscar usuarios",
+      "searchPlaceholder": "Filtrar por correo electrónico",
+      "tableEmail": "Correo Electrónico",
+      "tableStatus": "Estado de Cuenta",
+      "tableFacilities": "Centros",
+      "tableActions": "Acciones",
+      "editAssignments": "Editar Asignaciones",
+      "editAssignmentsAria": "Editar asignaciones de centros para {{email}}",
+      "facilitiesCount_one": "{{count}} centro",
+      "facilitiesCount_other": "{{count}} centros",
+      "noResults": "Ningún usuario coincide con su búsqueda.",
+      "loading": "Cargando usuarios…",
+      "error": "Error al cargar los usuarios. Por favor, inténtelo de nuevo.",
+      "retry": "Reintentar",
+      "statusConfirmed": "Confirmado",
+      "statusUnconfirmed": "No confirmado",
+      "statusForceChange": "Restablecimiento de contraseña requerido",
+      "statusUnknown": "Desconocido"
+    },
+    "modal": {
+      "title": "Gestionar Centros — {{email}}",
+      "close": "Cerrar",
+      "searchLabel": "Buscar centros",
+      "searchPlaceholder": "Filtrar por nombre del centro",
+      "noResults": "Ningún centro coincide con su búsqueda.",
+      "facilityListLabel": "Lista de asignación de centros",
+      "assigned": "asignado",
+      "notAssigned": "no asignado",
+      "assignSuccess": "{{facility}} asignado a {{email}}",
+      "removeSuccess": "{{facility}} eliminado de {{email}}",
+      "assignError": "Error al actualizar la asignación. Por favor, inténtelo de nuevo."
+    }
+  }
+}

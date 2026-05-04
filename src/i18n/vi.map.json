@@ -1,0 +1,38 @@
+{
+  "map": {
+    "ariaLabel": "Bản đồ các trung tâm sưởi ấm và làm mát tại Quận Douglas, Nebraska",
+    "facilitySelected": "{{name}} đã được chọn. Nhấn Tab để điều hướng chi tiết.",
+    "facilityListLabel": "Nội dung thay thế cho bản đồ",
+    "facilityListHeading": "Tất Cả Các Trung Tâm Sưởi Ấm và Làm Mát",
+    "facilityTableCaption": "Danh sách đầy đủ các trung tâm sưởi ấm và làm mát tại Quận Douglas, Nebraska",
+    "loading": "Đang tải dữ liệu bản đồ…",
+    "loadError": "Không thể tải bản đồ. Vui lòng tải lại trang."
+  },
+  "legend": {
+    "title": "Chú Giải Bản Đồ",
+    "warming": "Trung Tâm Sưởi Ấm",
+    "cooling": "Trung Tâm Làm Mát",
+    "dual": "Trung Tâm Sưởi Ấm và Làm Mát",
+    "inactive": "Đóng Cửa / Không Hoạt Động"
+  },
+  "facilityType": {
+    "warming": "Trung Tâm Sưởi Ấm",
+    "cooling": "Trung Tâm Làm Mát",
+    "dual": "Trung Tâm Sưởi Ấm và Làm Mát",
+    "inactive": "Không Hoạt Động"
+  },
+  "capacity": {
+    "available": "Còn Chỗ",
+    "nearFull": "Gần Đầy",
+    "full": "Đầy"
+  },
+  "aria": {
+    "warmingCenter": "Trung tâm sưởi ấm — đang mở cửa",
+    "coolingCenter": "Trung tâm làm mát — đang mở cửa",
+    "dualCenter": "Trung tâm sưởi ấm và làm mát — đang mở cho cả hai dịch vụ",
+    "inactiveCenter": "Không hoạt động — hiện đang đóng cửa",
+    "capacityAvailable": "Tình trạng sức chứa: còn chỗ",
+    "capacityNearFull": "Tình trạng sức chứa: gần đầy",
+    "capacityFull": "Tình trạng sức chứa: đã đầy"
+  }
+}

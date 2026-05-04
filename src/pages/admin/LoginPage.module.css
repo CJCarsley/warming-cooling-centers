@@ -1,0 +1,70 @@
+.page {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background-color: var(--color-bg);
+  min-height: 100%;
+}
+
+.container {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.containerWide {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--color-primary);
+  font-size: 0.9375rem;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+  color: var(--color-primary-light);
+}
+
+.backLink:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Override Amplify Authenticator theme to match app design */
+.authenticator {
+  --amplify-colors-brand-primary-10: #e8f0f8;
+  --amplify-colors-brand-primary-20: #c6d9ee;
+  --amplify-colors-brand-primary-40: #6e9fc6;
+  --amplify-colors-brand-primary-60: #2a5a8c;
+  --amplify-colors-brand-primary-80: var(--color-primary);
+  --amplify-colors-brand-primary-90: var(--color-primary-dark);
+  --amplify-colors-brand-primary-100: var(--color-primary-dark);
+  --amplify-colors-background-primary: var(--color-surface);
+  --amplify-colors-background-secondary: var(--color-bg);
+  --amplify-colors-border-primary: var(--color-border);
+  --amplify-colors-font-primary: var(--color-text);
+  --amplify-colors-font-secondary: var(--color-text-secondary);
+  --amplify-components-authenticator-router-border-color: var(--color-border);
+  --amplify-components-authenticator-router-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --amplify-components-button-primary-background-color: var(--color-primary);
+  --amplify-components-button-primary-hover-background-color: var(--color-primary-light);
+  --amplify-components-fieldcontrol-border-color: var(--color-border);
+  --amplify-components-fieldcontrol-focus-border-color: var(--color-focus);
+  --amplify-radii-small: 4px;
+  --amplify-radii-medium: 6px;
+  width: 100%;
+}

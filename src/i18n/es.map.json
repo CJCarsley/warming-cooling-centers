@@ -1,0 +1,38 @@
+{
+  "map": {
+    "ariaLabel": "Mapa de centros de calefacción y refrigeración en el Condado Douglas, Nebraska",
+    "facilitySelected": "{{name}} seleccionado. Presione Tab para navegar los detalles.",
+    "facilityListLabel": "Alternativa de texto para el mapa",
+    "facilityListHeading": "Todos los Centros de Calefacción y Refrigeración",
+    "facilityTableCaption": "Lista completa de centros de calefacción y refrigeración en el Condado Douglas, Nebraska",
+    "loading": "Cargando datos del mapa…",
+    "loadError": "Error al cargar el mapa. Por favor, actualice la página."
+  },
+  "legend": {
+    "title": "Leyenda del Mapa",
+    "warming": "Centro de Calefacción",
+    "cooling": "Centro de Refrigeración",
+    "dual": "Centro de Calefacción y Refrigeración",
+    "inactive": "Cerrado / Inactivo"
+  },
+  "facilityType": {
+    "warming": "Centro de Calefacción",
+    "cooling": "Centro de Refrigeración",
+    "dual": "Centro de Calefacción y Refrigeración",
+    "inactive": "Inactivo"
+  },
+  "capacity": {
+    "available": "Disponible",
+    "nearFull": "Casi lleno",
+    "full": "Lleno"
+  },
+  "aria": {
+    "warmingCenter": "Centro de calefacción — abierto para calentarse",
+    "coolingCenter": "Centro de refrigeración — abierto para refrescarse",
+    "dualCenter": "Centro de calefacción y refrigeración — abierto para ambos",
+    "inactiveCenter": "Inactivo — actualmente cerrado",
+    "capacityAvailable": "Estado de capacidad: disponible",
+    "capacityNearFull": "Estado de capacidad: casi lleno",
+    "capacityFull": "Estado de capacidad: lleno"
+  }
+}

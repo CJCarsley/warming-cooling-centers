@@ -1,0 +1,98 @@
+/* ─── CSS Custom Properties ─── */
+:root {
+  --color-primary: #1a3a5c;
+  --color-primary-dark: #0f2340;
+  --color-primary-light: #2a5a8c;
+
+  --color-warming: #d14b00;
+  --color-cooling: #1565c0;
+  --color-dual: #6a1b9a;
+  --color-inactive: #757575;
+
+  --color-capacity-available: #2e7d32;
+  --color-capacity-near-full: #f9a825;
+  --color-capacity-full: #c62828;
+
+  --color-bg: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-border: #d0d8e0;
+  --color-text: #1a1a2e;
+  --color-text-secondary: #4a5568;
+
+  --color-focus: #005fcc;
+  --color-focus-light: #7fb3ff;
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  --font-size-base: 1rem;
+  --line-height-base: 1.6;
+}
+
+/* ─── Reset & base ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Global focus styles (WCAG 2.1 AA) ─── */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ─── App shell ─── */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Utility ─── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ─── RTL base overrides ─────────────────────────────────────────────────────
+   Most RTL mirroring is handled by dir="rtl" on <html> via the browser's
+   built-in bidirectional algorithm. These rules cover positioned elements
+   that use explicit left/right values which the browser cannot auto-flip.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Ensure Arabic/RTL text uses an appropriate system font stack */
+[dir='rtl'] body {
+  font-family: 'Segoe UI', Tahoma, Arial, 'Noto Sans Arabic', sans-serif;
+}

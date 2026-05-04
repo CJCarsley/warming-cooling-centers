@@ -1,0 +1,110 @@
+{
+  "app": {
+    "title": "Trung Tâm Sưởi Ấm và Làm Mát Quận Douglas",
+    "subtitle": "Tìm các trung tâm sưởi ấm và làm mát khẩn cấp gần bạn"
+  },
+  "nav": {
+    "map": "Bản Đồ",
+    "home": "Trang Chủ",
+    "ariaLabel": "Điều hướng chính"
+  },
+  "header": {
+    "logoAlt": "Con dấu Quận Douglas"
+  },
+  "skipLink": {
+    "label": "Chuyển đến nội dung chính"
+  },
+  "footer": {
+    "copyright": "© {{year}} Quận Douglas, Nebraska. Đã đăng ký bản quyền.",
+    "disclaimer": "Thông tin có thể thay đổi. Hãy gọi trước để xác nhận tình trạng còn chỗ.",
+    "accessibilityStatement": "Tuyên Bố Khả Năng Tiếp Cận",
+    "contact": "Liên Hệ Chúng Tôi",
+    "staffLogin": "Đăng Nhập Nhân Viên"
+  },
+  "language": {
+    "select": "Chọn ngôn ngữ",
+    "selectAria": "Chọn ngôn ngữ hiển thị",
+    "english": "English",
+    "spanish": "Español",
+    "vietnamese": "Tiếng Việt",
+    "arabic": "العربية",
+    "changed": "Đã đổi ngôn ngữ sang {{language}}"
+  },
+  "status": {
+    "open": "Mở Cửa",
+    "closed": "Đóng Cửa"
+  },
+  "facility": {
+    "name": "Tên Cơ Sở",
+    "address": "Địa Chỉ",
+    "type": "Loại Hình",
+    "hours": "Giờ Mở Cửa",
+    "phone": "Điện Thoại",
+    "email": "Email",
+    "website": "Trang Web",
+    "nearestBusStop": "Bến Xe Buýt Gần Nhất",
+    "adaCompliant": "Tuân Thủ ADA",
+    "petAccessibility": "Chính Sách Thú Cưng",
+    "chargingStations": "Trạm Sạc",
+    "languageServices": "Dịch Vụ Ngôn Ngữ",
+    "capacity": "Sức Chứa Tổng",
+    "capacityStatus": "Tình Trạng Chỗ",
+    "hydration": "Nước Uống",
+    "eligibility": "Điều Kiện Tham Gia",
+    "spots": "chỗ",
+    "externalLinkSuffix": "(mở trong tab mới)"
+  },
+  "popup": {
+    "close": "Đóng",
+    "closeAria": "Đóng chi tiết của {{name}}",
+    "sections": {
+      "locationAccess": "Vị Trí và Lối Vào",
+      "contact": "Liên Hệ",
+      "hoursCapacity": "Giờ và Sức Chứa",
+      "accessibilityServices": "Tiếp Cận và Dịch Vụ",
+      "eligibility": "Điều Kiện Tham Gia"
+    }
+  },
+  "common": {
+    "notAvailable": "Không có thông tin",
+    "loading": "Đang tải…",
+    "error": "Đã xảy ra lỗi. Vui lòng thử lại."
+  },
+  "aria": {
+    "externalLink": "Mở trong tab mới"
+  },
+  "announcer": {
+    "translating": "Đang dịch nội dung…",
+    "translationComplete": "Dịch xong"
+  },
+  "admin": {
+    "login": {
+      "title": "Đăng Nhập Nhân Viên",
+      "backToMap": "Quay lại bản đồ",
+      "description": "Đăng nhập để quản lý trạng thái cơ sở",
+      "emailLabel": "Địa chỉ email",
+      "emailPlaceholder": "Nhập email của bạn"
+    },
+    "panel": {
+      "welcome": "Xin chào, {{email}}",
+      "signOut": "Đăng xuất",
+      "facilities": "Cơ Sở Của Bạn",
+      "warmingActive": "Sưởi Ấm",
+      "coolingActive": "Làm Mát",
+      "lastUpdated": "Cập nhật lần cuối",
+      "never": "Chưa cập nhật",
+      "confirmTitle": "Xác Nhận Thay Đổi Trạng Thái",
+      "confirmMessage": "Bạn có chắc muốn đánh dấu {{name}} là {{status}} cho {{type}}?",
+      "confirmYes": "Có, cập nhật",
+      "confirmNo": "Hủy",
+      "updateSuccess": "Trạng thái cơ sở đã được cập nhật thành công",
+      "updateError": "Không thể cập nhật trạng thái cơ sở. Vui lòng thử lại.",
+      "noFacilities": "Không có cơ sở nào được giao cho tài khoản của bạn. Liên hệ quản trị viên.",
+      "loading": "Đang tải cơ sở của bạn…",
+      "open": "mở cửa",
+      "closed": "đóng cửa",
+      "warming": "sưởi ấm",
+      "cooling": "làm mát"
+    }
+  }
+}

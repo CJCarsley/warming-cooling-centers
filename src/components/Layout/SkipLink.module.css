@@ -1,0 +1,21 @@
+.skipLink {
+  position: absolute;
+  top: -9999px;
+  left: 0.5rem;
+  z-index: 9999;
+  padding: 0.75rem 1.25rem;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  border-radius: 0 0 0.375rem 0.375rem;
+  text-decoration: none;
+  border: 2px solid #ffffff;
+  transition: top 0.1s;
+}
+
+.skipLink:focus {
+  top: 0;
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}

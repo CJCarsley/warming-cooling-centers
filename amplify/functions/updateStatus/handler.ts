@@ -1,0 +1,164 @@
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+
+const ARCGIS_CLIENT_ID = process.env.ARCGIS_CLIENT_ID!;
+const ARCGIS_CLIENT_SECRET = process.env.ARCGIS_CLIENT_SECRET!;
+const ARCGIS_FEATURE_LAYER_URL = process.env.ARCGIS_FEATURE_LAYER_URL!;
+const ARCGIS_TOKEN_URL = 'https://www.arcgis.com/sharing/rest/oauth2/token';
+
+interface UpdateStatusBody {
+  featureId: number;
+  field: 'Warming_Active' | 'Cooling_Active';
+  value: boolean;
+}
+
+
+interface ArcGISApplyEditsResponse {
+  updateResults?: Array<{
+    objectId: number;
+    success: boolean;
+    error?: { code: number; description: string };
+  }>;
+  error?: { code: number; message: string };
+}
+
+const CORS_HEADERS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Authorization,Content-Type',
+};
+
+interface ArcGISTokenResponse {
+  access_token?: string;
+  error?: { code: number; message: string };
+}
+
+async function getArcGISToken(): Promise<string> {
+  const params = new URLSearchParams({
+    client_id: ARCGIS_CLIENT_ID,
+    client_secret: ARCGIS_CLIENT_SECRET,
+    grant_type: 'client_credentials',
+    f: 'json',
+  });
+
+  const res = await fetch(ARCGIS_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+  });
+
+  const data = (await res.json()) as ArcGISTokenResponse;
+  if (!data.access_token) {
+    throw new Error(`ArcGIS token error: ${JSON.stringify(data.error)}`);
+  }
+  return data.access_token;
+}
+
+export const handler = async (
+  event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
+  // Claims are injected by the Cognito REST API authorizer — no JWT re-validation needed
+  const claims = event.requestContext.authorizer?.claims as
+    | Record<string, string>
+    | undefined;
+  const facilityIdsStr = claims?.['custom:facility_ids'] ?? '';
+  const allowedIds = facilityIdsStr
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (!event.body) {
+    return {
+      statusCode: 400,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Missing request body' }),
+    };
+  }
+
+  let body: UpdateStatusBody;
+  try {
+    body = JSON.parse(event.body) as UpdateStatusBody;
+  } catch {
+    return {
+      statusCode: 400,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Invalid JSON' }),
+    };
+  }
+
+  const { featureId, field, value } = body;
+
+  if (
+    typeof featureId !== 'number' ||
+    !['Warming_Active', 'Cooling_Active'].includes(field) ||
+    typeof value !== 'boolean'
+  ) {
+    return {
+      statusCode: 400,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Invalid request parameters' }),
+    };
+  }
+
+  // Verify the authenticated user is authorized for this specific facility
+  if (!allowedIds.includes(String(featureId))) {
+    return {
+      statusCode: 403,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Not authorized for this facility' }),
+    };
+  }
+
+  try {
+    const token = await getArcGISToken();
+
+    const updates = JSON.stringify([
+      { attributes: { ObjectID: featureId, [field]: value ? 'Yes' : 'No' } },
+    ]);
+
+    const applyEditsParams = new URLSearchParams({
+      updates,
+      f: 'json',
+      token,
+    });
+
+    const applyRes = await fetch(`${ARCGIS_FEATURE_LAYER_URL}/applyEdits`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: applyEditsParams.toString(),
+    });
+
+    const result = (await applyRes.json()) as ArcGISApplyEditsResponse;
+
+    if (result.error) {
+      console.error('ArcGIS applyEdits error:', result.error);
+      return {
+        statusCode: 502,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({ error: 'Feature layer update failed' }),
+      };
+    }
+
+    const updateResult = result.updateResults?.[0];
+    if (!updateResult?.success) {
+      console.error('ArcGIS update rejected:', updateResult);
+      return {
+        statusCode: 502,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({ error: 'Feature layer rejected the update' }),
+      };
+    }
+
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ success: true }),
+    };
+  } catch (err) {
+    console.error('Internal error:', err);
+    return {
+      statusCode: 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Internal server error' }),
+    };
+  }
+};
