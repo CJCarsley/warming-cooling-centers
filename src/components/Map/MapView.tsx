@@ -80,10 +80,12 @@ export default function MapViewComponent() {
     view.ui.add(search, 'top-right');
     view.ui.add(locate, 'top-right');
 
-    const searchHandle = search.on('select-result', (event: { result?: { feature?: { geometry?: { type?: string; latitude?: number; longitude?: number } } } }) => {
+    // ArcGIS TS typings don't expose 'select-result' in on() overloads; cast to any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const searchHandle = (search as any).on('select-result', (event: { result?: { feature?: { geometry?: { x?: number; y?: number } } } }) => {
       const geom = event.result?.feature?.geometry;
-      if (geom && typeof geom.latitude === 'number' && typeof geom.longitude === 'number') {
-        setNearbyPoint({ latitude: geom.latitude, longitude: geom.longitude });
+      if (geom && typeof geom.x === 'number' && typeof geom.y === 'number') {
+        setNearbyPoint({ latitude: geom.y, longitude: geom.x });
       }
     });
 

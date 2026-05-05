@@ -113,8 +113,8 @@ export function useFeatureLayer(view: MapView | null): UseFeatureLayerResult {
             const pt = f.geometry as Point;
             return {
               attributes: f.attributes as FacilityAttributes,
-              longitude: pt.longitude,
-              latitude: pt.latitude,
+              longitude: pt.x,
+              latitude: pt.y,
             };
           }),
       );
