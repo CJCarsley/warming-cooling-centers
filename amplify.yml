@@ -4,7 +4,7 @@ backend:
     build:
       commands:
         - npm install --prefix amplify --legacy-peer-deps
-        - npm install --no-save esbuild
+        - npm install --no-save esbuild --legacy-peer-deps
         - npm exec --prefix amplify -- ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 frontend:
   phases:
