@@ -2,6 +2,11 @@ import { useRef, useState, useEffect, useCallback, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import Search from '@arcgis/core/widgets/Search';
 import Locate from '@arcgis/core/widgets/Locate';
+import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer';
+import Graphic from '@arcgis/core/Graphic';
+import Point from '@arcgis/core/geometry/Point';
+import SimpleMarkerSymbol from '@arcgis/core/symbols/SimpleMarkerSymbol';
+import type EsriMap from '@arcgis/core/Map';
 import { useMapView } from '../../hooks/useMapView';
 import { useFeatureLayer } from '../../hooks/useFeatureLayer';
 import { useNearby } from '../../hooks/useNearby';
@@ -26,6 +31,9 @@ export default function MapViewComponent() {
   const view = useMapView(mapContainerRef);
   const { layer, facilities, facilitiesWithLocation } = useFeatureLayer(view);
 
+  const pinLayerRef = useRef<GraphicsLayer | null>(null);
+  const flashTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
   const [selectedFacility, setSelectedFacility] =
     useState<FacilityAttributes | null>(null);
   const [announcement, setAnnouncement] = useState('');
@@ -39,6 +47,19 @@ export default function MapViewComponent() {
     setSelectedFacility(null);
     mapContainerRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (!view) return;
+    const pinLayer = new GraphicsLayer();
+    (view.map as EsriMap).add(pinLayer);
+    pinLayerRef.current = pinLayer;
+    return () => {
+      flashTimersRef.current.forEach(clearTimeout);
+      flashTimersRef.current = [];
+      if (!view.destroyed) (view.map as EsriMap).remove(pinLayer);
+      pinLayerRef.current = null;
+    };
+  }, [view]);
 
   useEffect(() => {
     if (!view || !layer) return;
@@ -57,10 +78,32 @@ export default function MapViewComponent() {
             setAnnouncement(tMap('map.facilitySelected', { name: attrs.Name }));
           } else {
             setSelectedFacility(null);
-            setNearbyPoint({
-              latitude: event.mapPoint.latitude,
-              longitude: event.mapPoint.longitude,
-            });
+            const { latitude, longitude } = event.mapPoint;
+            const pinLayer = pinLayerRef.current;
+            if (pinLayer) {
+              flashTimersRef.current.forEach(clearTimeout);
+              flashTimersRef.current = [];
+              pinLayer.graphics.removeAll();
+              pinLayer.graphics.add(
+                new Graphic({
+                  geometry: new Point({ latitude, longitude }),
+                  symbol: new SimpleMarkerSymbol({
+                    style: 'circle',
+                    color: [255, 215, 0, 0.9],
+                    size: '18px',
+                    outline: { color: [80, 60, 0, 1], width: 2 },
+                  }),
+                }),
+              );
+              pinLayer.opacity = 1;
+              flashTimersRef.current.push(
+                setTimeout(() => { pinLayer.opacity = 0; }, 250),
+              );
+              flashTimersRef.current.push(
+                setTimeout(() => { pinLayer.opacity = 1; }, 500),
+              );
+            }
+            setNearbyPoint({ latitude, longitude });
           }
         })
         .catch((err: unknown) => {
@@ -129,7 +172,10 @@ export default function MapViewComponent() {
         {nearbyResults.length > 0 && (
           <NearbyPanel
             results={nearbyResults}
-            onClose={() => setNearbyPoint(null)}
+            onClose={() => {
+              if (pinLayerRef.current) pinLayerRef.current.graphics.removeAll();
+              setNearbyPoint(null);
+            }}
           />
         )}
       </div>
