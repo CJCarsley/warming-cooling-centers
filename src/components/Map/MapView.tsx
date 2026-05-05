@@ -80,12 +80,13 @@ export default function MapViewComponent() {
     view.ui.add(search, 'top-right');
     view.ui.add(locate, 'top-right');
 
-    // ArcGIS TS typings don't expose 'select-result' in on() overloads; cast to any
+    // ArcGIS TS typings don't expose 'select-result' in on() overloads; cast to any.
+    // Use .latitude/.longitude (not .x/.y) — ArcGIS auto-converts to WGS84 regardless of source SR.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const searchHandle = (search as any).on('select-result', (event: { result?: { feature?: { geometry?: { x?: number; y?: number } } } }) => {
+    const searchHandle = (search as any).on('select-result', (event: { result?: { feature?: { geometry?: { latitude?: number; longitude?: number } } } }) => {
       const geom = event.result?.feature?.geometry;
-      if (geom && typeof geom.x === 'number' && typeof geom.y === 'number') {
-        setNearbyPoint({ latitude: geom.y, longitude: geom.x });
+      if (geom && typeof geom.latitude === 'number' && typeof geom.longitude === 'number') {
+        setNearbyPoint({ latitude: geom.latitude, longitude: geom.longitude });
       }
     });
 
