@@ -13,7 +13,7 @@ frontend:
         - npm ci --legacy-peer-deps
     build:
       commands:
-        - npm run build
+        - NODE_OPTIONS=--max-old-space-size=7168 npm run build
   artifacts:
     baseDirectory: dist
     files:
