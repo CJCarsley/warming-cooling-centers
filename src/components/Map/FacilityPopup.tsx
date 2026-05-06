@@ -8,7 +8,25 @@ import styles from './FacilityPopup.module.css';
 
 interface FacilityPopupProps {
   facility: FacilityAttributes;
+  facilityLocation: { latitude: number; longitude: number };
+  originPoint?: { latitude: number; longitude: number } | null;
   onClose: () => void;
+}
+
+function buildDirectionsUrl(
+  dest: { latitude: number; longitude: number },
+  origin: { latitude: number; longitude: number } | null | undefined,
+  isMobile: boolean,
+): string {
+  const d = `${dest.latitude},${dest.longitude}`;
+  if (isMobile) {
+    return `https://maps.google.com/maps?daddr=${d}&dirflg=d`;
+  }
+  if (origin) {
+    const o = `${origin.latitude},${origin.longitude}`;
+    return `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}&travelmode=driving`;
+  }
+  return `https://www.google.com/maps/dir/?api=1&destination=${d}&travelmode=driving`;
 }
 
 interface CapacityConfig {
@@ -77,7 +95,7 @@ function InfoRow({
   );
 }
 
-export default function FacilityPopup({ facility, onClose }: FacilityPopupProps) {
+export default function FacilityPopup({ facility, facilityLocation, originPoint, onClose }: FacilityPopupProps) {
   const { t, i18n } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
   const headingId = useId();
@@ -88,6 +106,10 @@ export default function FacilityPopup({ facility, onClose }: FacilityPopupProps)
   const type = getFacilityType(facility);
   const isActive = type !== 'inactive';
   const lang = i18n.language;
+
+  const isMobile = typeof window !== 'undefined' &&
+    window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  const directionsUrl = buildDirectionsUrl(facilityLocation, originPoint, isMobile);
 
   // ── Dynamic field translation ─────────────────────────────────────────────
   // Each hook call is for one translatable field value from ArcGIS.
@@ -218,6 +240,20 @@ export default function FacilityPopup({ facility, onClose }: FacilityPopupProps)
         <div className={styles.badgeRow}>
           <StatusBadge type={type} isActive={isActive} />
           <CapacityBadge status={facility.Capacity_Status} />
+        </div>
+
+        {/* Get Directions */}
+        <div className={styles.directionsRow}>
+          <a
+            href={directionsUrl}
+            className={styles.directionsButton}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t('popup.getDirectionsAria', { name: facility.Name })}
+          >
+            <span aria-hidden="true">↗</span>
+            {t('popup.getDirections')}
+          </a>
         </div>
 
         {/* Scrollable content */}
