@@ -67,6 +67,12 @@
       "eligibility": "Điều Kiện Tham Gia"
     }
   },
+  "directions": {
+    "google": "Google Maps",
+    "waze": "Waze",
+    "apple": "Apple Maps",
+    "viaAria": "Chỉ đường đến {{name}} qua {{service}}"
+  },
   "common": {
     "notAvailable": "Không có thông tin",
     "loading": "Đang tải…",

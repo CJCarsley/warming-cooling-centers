@@ -68,6 +68,12 @@
       "eligibility": "Eligibility"
     }
   },
+  "directions": {
+    "google": "Google Maps",
+    "waze": "Waze",
+    "apple": "Apple Maps",
+    "viaAria": "Get directions to {{name}} via {{service}}"
+  },
   "nearby": {
     "heading": "Nearby Facilities",
     "close": "Close nearby facilities panel",
