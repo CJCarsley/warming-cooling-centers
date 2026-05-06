@@ -4,6 +4,7 @@ import type { FacilityAttributes } from '../../types/facility';
 import { getFacilityType } from '../../types/facility';
 import { useTranslateContent } from '../../hooks/useTranslateContent';
 import StatusBadge from '../common/StatusBadge';
+import DirectionsButtons from '../common/DirectionsButtons';
 import styles from './FacilityPopup.module.css';
 
 interface CapacityConfig {
@@ -60,7 +61,13 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-export default function FacilityDetails({ facility }: { facility: FacilityAttributes }) {
+interface FacilityDetailsProps {
+  facility: FacilityAttributes;
+  facilityLocation?: { latitude: number; longitude: number };
+  originPoint?: { latitude: number; longitude: number } | null;
+}
+
+export default function FacilityDetails({ facility, facilityLocation, originPoint }: FacilityDetailsProps) {
   const { t, i18n } = useTranslation();
   const announcerId = useId();
   const [translationAnnouncement, setTranslationAnnouncement] = useState('');
@@ -106,6 +113,16 @@ export default function FacilityDetails({ facility }: { facility: FacilityAttrib
         <StatusBadge type={type} isActive={isActive} />
         <CapacityBadge status={facility.Capacity_Status} />
       </div>
+
+      {facilityLocation && (
+        <div className={styles.directionsRow}>
+          <DirectionsButtons
+            dest={facilityLocation}
+            origin={originPoint}
+            facilityName={facility.Name}
+          />
+        </div>
+      )}
 
       <div className={styles.content}>
         <section aria-label={t('popup.sections.locationAccess')}>

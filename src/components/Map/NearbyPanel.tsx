@@ -6,6 +6,7 @@ import styles from './NearbyPanel.module.css';
 
 interface NearbyPanelProps {
   results: NearbyResult[];
+  originPoint?: { latitude: number; longitude: number } | null;
   onClose: () => void;
 }
 
@@ -14,7 +15,7 @@ function formatDist(mi: number): string {
   return `${mi.toFixed(1)} mi`;
 }
 
-export default function NearbyPanel({ results, onClose }: NearbyPanelProps) {
+export default function NearbyPanel({ results, originPoint, onClose }: NearbyPanelProps) {
   const { t } = useTranslation();
   const headingId = useId();
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
@@ -74,7 +75,11 @@ export default function NearbyPanel({ results, onClose }: NearbyPanelProps) {
                   aria-labelledby={btnId}
                   className={styles.detail}
                 >
-                  <FacilityDetails facility={r.facility.attributes} />
+                  <FacilityDetails
+                    facility={r.facility.attributes}
+                    facilityLocation={{ latitude: r.facility.latitude, longitude: r.facility.longitude }}
+                    originPoint={originPoint}
+                  />
                 </div>
               )}
             </li>

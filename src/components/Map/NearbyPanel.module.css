@@ -139,8 +139,6 @@
 
 .detail {
   border-top: 1px solid var(--color-border, #ddd);
-  overflow-y: auto;
-  max-height: 50vh;
 }
 
 /* On mobile, the map is 60vh; switch panel to a bottom-anchored overlay */
@@ -154,7 +152,4 @@
     max-height: 55%;
   }
 
-  .detail {
-    max-height: 35vh;
-  }
 }

@@ -177,6 +177,7 @@ export default function MapViewComponent() {
         {nearbyResults.length > 0 && (
           <NearbyPanel
             results={nearbyResults}
+            originPoint={nearbyPoint}
             onClose={() => {
               if (pinLayerRef.current) pinLayerRef.current.graphics.removeAll();
               setNearbyPoint(null);

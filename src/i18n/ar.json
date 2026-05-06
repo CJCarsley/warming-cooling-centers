@@ -67,6 +67,12 @@
       "eligibility": "الأهلية"
     }
   },
+  "directions": {
+    "google": "Google Maps",
+    "waze": "Waze",
+    "apple": "Apple Maps",
+    "viaAria": "الحصول على الاتجاهات إلى {{name}} عبر {{service}}"
+  },
   "common": {
     "notAvailable": "غير متوفر",
     "loading": "جارٍ التحميل…",

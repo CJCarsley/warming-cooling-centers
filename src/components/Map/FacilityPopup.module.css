@@ -105,31 +105,6 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-.directionsButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 1rem;
-  width: 100%;
-  justify-content: center;
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  border-radius: 0.375rem;
-  text-decoration: none;
-  transition: background-color 0.15s;
-}
-
-.directionsButton:hover {
-  background: var(--color-primary-dark);
-}
-
-.directionsButton:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
 /* ─── Scrollable content ─── */
 .content {
   flex: 1 1 auto;
