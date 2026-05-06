@@ -42,8 +42,17 @@ const { userPoolArn } = userPool;
 
 // ── Lambda environment variables & IAM permissions ───────────────────────────
 // Cast IFunction → Function to access addEnvironment / addToRolePolicy
+const updateStatusFn = backend.updateStatus.resources.lambda as LambdaFunction;
 const getUsersFn = backend.getUsersAndFacilities.resources.lambda as LambdaFunction;
 const updateFacilitiesFn = backend.updateUserFacilities.resources.lambda as LambdaFunction;
+
+updateStatusFn.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['ses:SendEmail'],
+    resources: ['*'],
+  }),
+);
 
 getUsersFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 updateFacilitiesFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);

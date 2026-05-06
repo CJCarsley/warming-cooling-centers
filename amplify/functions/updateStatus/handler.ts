@@ -1,9 +1,15 @@
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 const ARCGIS_CLIENT_ID = process.env.ARCGIS_CLIENT_ID!;
 const ARCGIS_CLIENT_SECRET = process.env.ARCGIS_CLIENT_SECRET!;
 const ARCGIS_FEATURE_LAYER_URL = process.env.ARCGIS_FEATURE_LAYER_URL!;
 const ARCGIS_TOKEN_URL = 'https://www.arcgis.com/sharing/rest/oauth2/token';
+const NOTIFICATION_EMAILS = process.env.NOTIFICATION_EMAILS ?? '';
+const SES_FROM_EMAIL = process.env.SES_FROM_EMAIL!;
+const SES_REGION = process.env.SES_REGION ?? 'us-west-2';
+
+const ses = new SESClient({ region: SES_REGION });
 
 interface UpdateStatusBody {
   featureId: number;
@@ -30,6 +36,53 @@ const CORS_HEADERS = {
 interface ArcGISTokenResponse {
   access_token?: string;
   error?: { code: number; message: string };
+}
+
+interface ArcGISQueryResponse {
+  features?: Array<{ attributes: { Name?: string } }>;
+}
+
+async function getFacilityName(token: string, objectId: number): Promise<string> {
+  const params = new URLSearchParams({
+    objectIds: String(objectId),
+    outFields: 'Name',
+    f: 'json',
+    token,
+  });
+  try {
+    const res = await fetch(`${ARCGIS_FEATURE_LAYER_URL}/query?${params}`);
+    const data = (await res.json()) as ArcGISQueryResponse;
+    return data.features?.[0]?.attributes?.Name ?? `Facility #${objectId}`;
+  } catch {
+    return `Facility #${objectId}`;
+  }
+}
+
+async function sendActivationEmail(
+  facilityName: string,
+  field: 'Warming_Active' | 'Cooling_Active',
+): Promise<void> {
+  const toAddresses = NOTIFICATION_EMAILS.split(',').map((e) => e.trim()).filter(Boolean);
+  if (!toAddresses.length || !SES_FROM_EMAIL) return;
+
+  const type = field === 'Warming_Active' ? 'warming' : 'cooling';
+  const subject = `${facilityName} activated as a ${type} center`;
+  const body = `${facilityName} has been activated as a ${type} center.\n\nThis is an automated notification from the Douglas County Warming & Cooling Centers system.`;
+  const html = `<p><strong>${facilityName}</strong> has been activated as a <strong>${type} center</strong>.</p><p>This is an automated notification from the Douglas County Warming &amp; Cooling Centers system.</p>`;
+
+  await ses.send(
+    new SendEmailCommand({
+      Source: SES_FROM_EMAIL,
+      Destination: { ToAddresses: toAddresses },
+      Message: {
+        Subject: { Data: subject },
+        Body: {
+          Text: { Data: body },
+          Html: { Data: html },
+        },
+      },
+    }),
+  );
 }
 
 async function getArcGISToken(): Promise<string> {
@@ -146,6 +199,15 @@ export const handler = async (
         headers: CORS_HEADERS,
         body: JSON.stringify({ error: 'Feature layer rejected the update' }),
       };
+    }
+
+    if (value) {
+      try {
+        const facilityName = await getFacilityName(token, featureId);
+        await sendActivationEmail(facilityName, field);
+      } catch (emailErr) {
+        console.error('Email notification failed (non-fatal):', emailErr);
+      }
     }
 
     return {
