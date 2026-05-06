@@ -36,6 +36,8 @@ export default function MapViewComponent() {
 
   const [selectedFacility, setSelectedFacility] =
     useState<FacilityAttributes | null>(null);
+  const [selectedFacilityLocation, setSelectedFacilityLocation] =
+    useState<{ latitude: number; longitude: number } | null>(null);
   const [announcement, setAnnouncement] = useState('');
   const [nearbyPoint, setNearbyPoint] = useState<{ latitude: number; longitude: number } | null>(null);
 
@@ -45,6 +47,7 @@ export default function MapViewComponent() {
 
   const handlePopupClose = useCallback(() => {
     setSelectedFacility(null);
+    setSelectedFacilityLocation(null);
     mapContainerRef.current?.focus();
   }, []);
 
@@ -74,7 +77,9 @@ export default function MapViewComponent() {
           const result = response.results[0];
           if (result && result.type === 'graphic') {
             const attrs = result.graphic.attributes as FacilityAttributes;
+            const geom = result.graphic.geometry as { latitude: number; longitude: number };
             setSelectedFacility(attrs);
+            setSelectedFacilityLocation({ latitude: geom.latitude, longitude: geom.longitude });
             setAnnouncement(tMap('map.facilitySelected', { name: attrs.Name }));
           } else {
             setSelectedFacility(null);
@@ -180,9 +185,11 @@ export default function MapViewComponent() {
         )}
       </div>
 
-      {selectedFacility && (
+      {selectedFacility && selectedFacilityLocation && (
         <FacilityPopup
           facility={selectedFacility}
+          facilityLocation={selectedFacilityLocation}
+          originPoint={nearbyPoint}
           onClose={handlePopupClose}
         />
       )}

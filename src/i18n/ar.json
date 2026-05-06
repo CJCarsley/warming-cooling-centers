@@ -57,6 +57,8 @@
   "popup": {
     "close": "إغلاق",
     "closeAria": "إغلاق تفاصيل {{name}}",
+    "getDirections": "الحصول على الاتجاهات",
+    "getDirectionsAria": "الحصول على اتجاهات إلى {{name}}",
     "sections": {
       "locationAccess": "الموقع والوصول",
       "contact": "التواصل",

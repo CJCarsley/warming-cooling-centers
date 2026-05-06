@@ -58,6 +58,8 @@
   "popup": {
     "close": "Cerrar",
     "closeAria": "Cerrar detalles de {{name}}",
+    "getDirections": "Cómo llegar",
+    "getDirectionsAria": "Cómo llegar a {{name}}",
     "sections": {
       "locationAccess": "Ubicación y Acceso",
       "contact": "Contacto",

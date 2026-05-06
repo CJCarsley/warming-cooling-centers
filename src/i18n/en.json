@@ -58,6 +58,8 @@
   "popup": {
     "close": "Close",
     "closeAria": "Close details for {{name}}",
+    "getDirections": "Get Directions",
+    "getDirectionsAria": "Get directions to {{name}}",
     "sections": {
       "locationAccess": "Location & Access",
       "contact": "Contact",

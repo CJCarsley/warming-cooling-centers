@@ -57,6 +57,8 @@
   "popup": {
     "close": "Đóng",
     "closeAria": "Đóng chi tiết của {{name}}",
+    "getDirections": "Chỉ đường",
+    "getDirectionsAria": "Chỉ đường đến {{name}}",
     "sections": {
       "locationAccess": "Vị Trí và Lối Vào",
       "contact": "Liên Hệ",
