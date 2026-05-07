@@ -29,7 +29,7 @@ export default function MapViewComponent() {
   const { t: tMap } = useTranslation('map');
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const view = useMapView(mapContainerRef);
-  const { layer, facilities, facilitiesWithLocation } = useFeatureLayer(view);
+  const { layer, facilitiesWithLocation } = useFeatureLayer(view);
 
   const pinLayerRef = useRef<GraphicsLayer | null>(null);
   const flashTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -39,17 +39,37 @@ export default function MapViewComponent() {
   const [selectedFacilityLocation, setSelectedFacilityLocation] =
     useState<{ latitude: number; longitude: number } | null>(null);
   const [announcement, setAnnouncement] = useState('');
+  const [nearbyAnnouncement, setNearbyAnnouncement] = useState('');
   const [nearbyPoint, setNearbyPoint] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const nearbyResults = useNearby(nearbyPoint, facilitiesWithLocation);
 
   const liveRegionId = useId();
+  const nearbyAnnouncerId = useId();
 
   const handlePopupClose = useCallback(() => {
     setSelectedFacility(null);
     setSelectedFacilityLocation(null);
     mapContainerRef.current?.focus();
   }, []);
+
+  const handleFacilityListOpen = useCallback(
+    (attrs: FacilityAttributes, loc: { latitude: number; longitude: number }) => {
+      setSelectedFacility(attrs);
+      setSelectedFacilityLocation(loc);
+      setAnnouncement(tMap('map.facilitySelected', { name: attrs.Name }));
+    },
+    [tMap],
+  );
+
+  // Announce nearby result count whenever it changes
+  useEffect(() => {
+    if (nearbyResults.length > 0) {
+      setNearbyAnnouncement(t('nearby.resultsAnnouncement', { count: nearbyResults.length }));
+    } else {
+      setNearbyAnnouncement('');
+    }
+  }, [nearbyResults.length, t]);
 
   useEffect(() => {
     if (!view) return;
@@ -164,6 +184,16 @@ export default function MapViewComponent() {
         {announcement}
       </div>
 
+      {/* Nearby result count announcement — separate live region to avoid clobbering facility selection */}
+      <div
+        id={nearbyAnnouncerId}
+        aria-live="polite"
+        aria-atomic="true"
+        className={styles.srOnly}
+      >
+        {nearbyAnnouncement}
+      </div>
+
       <div className={styles.mapContainer}>
         {/* role="application" is an ARIA widget role; tabIndex={0} is required for keyboard entry */}
         <div
@@ -195,7 +225,7 @@ export default function MapViewComponent() {
         />
       )}
 
-      {/* Accessible text alternative — screen-reader-only table */}
+      {/* Accessible text alternative — screen-reader-only table with keyboard popup triggers */}
       <section
         className={styles.srOnly}
         aria-label={tMap('map.facilityListLabel')}
@@ -217,12 +247,25 @@ export default function MapViewComponent() {
             </tr>
           </thead>
           <tbody>
-            {facilities.map((f) => {
+            {facilitiesWithLocation.map((fl) => {
+              const f = fl.attributes;
               const fType = getFacilityType(f);
               const isActive = fType !== 'inactive';
               return (
                 <tr key={f.ObjectID}>
-                  <td>{f.Name}</td>
+                  <td>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleFacilityListOpen(f, {
+                          latitude: fl.latitude,
+                          longitude: fl.longitude,
+                        })
+                      }
+                    >
+                      {tMap('map.openFacility', { name: f.Name })}
+                    </button>
+                  </td>
                   <td>{f.Address ?? t('common.notAvailable')}</td>
                   <td>{tMap(FACILITY_TYPE_KEYS[fType])}</td>
                   <td>{isActive ? t('status.open') : t('status.closed')}</td>

@@ -4,7 +4,6 @@ import styles from './MapLegend.module.css';
 const LEGEND_ITEMS = [
   { key: 'warming', shapeClass: 'circle', colorClass: 'colorWarming' },
   { key: 'cooling', shapeClass: 'diamond', colorClass: 'colorCooling' },
-  { key: 'dual', shapeClass: 'square', colorClass: 'colorDual' },
   { key: 'inactive', shapeClass: 'triangle', colorClass: 'colorInactive' },
 ] as const;
 

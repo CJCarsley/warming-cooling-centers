@@ -82,15 +82,28 @@ function InfoRow({
 
 export default function FacilityPopup({ facility, facilityLocation, originPoint, onClose }: FacilityPopupProps) {
   const { t, i18n } = useTranslation();
+  const { t: tMap } = useTranslation('map');
   const dialogRef = useRef<HTMLDivElement>(null);
   const headingId = useId();
   const announcerId = useId();
+  const descriptionId = useId();
   const [translationAnnouncement, setTranslationAnnouncement] = useState('');
   const prevLoadingRef = useRef(false);
 
   const type = getFacilityType(facility);
   const isActive = type !== 'inactive';
   const lang = i18n.language;
+
+  const TYPE_STATUS_LABELS: Record<string, string> = {
+    warming: tMap('aria.warmingCenter'),
+    cooling: tMap('aria.coolingCenter'),
+    dual: tMap('aria.dualCenter'),
+    inactive: tMap('aria.inactiveCenter'),
+  };
+  const dialogDescription = [
+    TYPE_STATUS_LABELS[type] ?? '',
+    facility.Address ?? '',
+  ].filter(Boolean).join(' — ');
 
   // ── Dynamic field translation ─────────────────────────────────────────────
   // Each hook call is for one translatable field value from ArcGIS.
@@ -189,10 +202,15 @@ export default function FacilityPopup({ facility, facilityLocation, originPoint,
         role="dialog"
         aria-modal="true"
         aria-labelledby={headingId}
-        aria-describedby={announcerId}
+        aria-describedby={descriptionId}
         className={styles.dialog}
       >
-        {/* Translation state announcer */}
+        {/* Static description read by AT when dialog opens */}
+        <div id={descriptionId} className={styles.srOnly}>
+          {dialogDescription}
+        </div>
+
+        {/* Translation state announcer — separate live region, not used as describedby */}
         <div
           id={announcerId}
           aria-live="polite"

@@ -5,6 +5,7 @@
     "facilityListLabel": "Nội dung thay thế cho bản đồ",
     "facilityListHeading": "Tất Cả Các Trung Tâm Sưởi Ấm và Làm Mát",
     "facilityTableCaption": "Danh sách đầy đủ các trung tâm sưởi ấm và làm mát tại Quận Douglas, Nebraska",
+    "openFacility": "Mở chi tiết cho {{name}}",
     "loading": "Đang tải dữ liệu bản đồ…",
     "loadError": "Không thể tải bản đồ. Vui lòng tải lại trang."
   },

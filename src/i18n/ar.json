@@ -67,6 +67,13 @@
       "eligibility": "الأهلية"
     }
   },
+  "nearby": {
+    "heading": "المراكز القريبة",
+    "close": "إغلاق لوحة المراكز القريبة",
+    "distanceAria": "على بُعد {{dist}}",
+    "resultsAnnouncement_one": "عرض مركز قريب واحد",
+    "resultsAnnouncement_other": "عرض {{count}} مراكز قريبة"
+  },
   "directions": {
     "google": "Google Maps",
     "waze": "Waze",

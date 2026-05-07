@@ -64,7 +64,7 @@
 }
 
 .navLink:focus-visible {
-  outline: 2px solid var(--color-focus-light);
+  outline: 3px solid var(--color-focus-light);
   outline-offset: 2px;
   color: #ffffff;
 }

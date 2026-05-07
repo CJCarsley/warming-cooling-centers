@@ -5,6 +5,7 @@
     "facilityListLabel": "Alternativa de texto para el mapa",
     "facilityListHeading": "Todos los Centros de Calefacción y Refrigeración",
     "facilityTableCaption": "Lista completa de centros de calefacción y refrigeración en el Condado Douglas, Nebraska",
+    "openFacility": "Abrir detalles de {{name}}",
     "loading": "Cargando datos del mapa…",
     "loadError": "Error al cargar el mapa. Por favor, actualice la página."
   },

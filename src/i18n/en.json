@@ -77,7 +77,9 @@
   "nearby": {
     "heading": "Nearby Facilities",
     "close": "Close nearby facilities panel",
-    "distanceAria": "{{dist}} away"
+    "distanceAria": "{{dist}} away",
+    "resultsAnnouncement_one": "Showing 1 nearby center",
+    "resultsAnnouncement_other": "Showing {{count}} nearby centers"
   },
   "common": {
     "notAvailable": "Not available",
