@@ -199,8 +199,13 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
         if (!clearRes.ok) throw new Error(`HTTP ${clearRes.status}`);
       }
 
-      // Clear keep-open override on any Warming/Cooling toggle
-      if (keepOpenIds.has(facilityId)) {
+      // Auto-clear keep-open only when the last active toggle is being turned off
+      const otherField: EditStatusField =
+        field === 'Warming_Active' ? 'Cooling_Active' : 'Warming_Active';
+      const facilityState = facilities.find((f) => f.ObjectID === facilityId);
+      const otherIsActive = facilityState?.[otherField] === 'Yes';
+      const willBeInactive = !newValue && !otherIsActive;
+      if (keepOpenIds.has(facilityId) && willBeInactive) {
         void fetch(`${resolvedApiBase}facilities/keep-open`, {
           method: 'PATCH',
           headers: { Authorization: idToken, 'Content-Type': 'application/json' },
@@ -235,7 +240,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
         return next;
       });
     }
-  }, [pendingToggle, keepOpenIds, t]);
+  }, [pendingToggle, keepOpenIds, facilities, t]);
 
   const handleKeepOpenToggle = useCallback(
     async (facility: AdminFacility) => {
@@ -414,7 +419,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
                           type="checkbox"
                           className={styles.keepOpenCheckbox}
                           checked={isKeptOpen}
-                          disabled={isKeepOpenPending}
+                          disabled={isKeepOpenPending || (!isWarmingActive && !isCoolingActive)}
                           onChange={() => void handleKeepOpenToggle(facility)}
                           aria-label={t('admin.panel.keepOpenAria', { name: facility.Name })}
                         />
