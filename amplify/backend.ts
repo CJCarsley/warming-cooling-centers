@@ -6,10 +6,9 @@ import {
   RestApi,
 } from 'aws-cdk-lib/aws-apigateway';
 import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
-import { Rule, Schedule } from 'aws-cdk-lib/aws-events';
-import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets';
+import { IRule, IRuleTarget, Rule, RuleTargetConfig, Schedule } from 'aws-cdk-lib/aws-events';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
-import { Function as LambdaFunction } from 'aws-cdk-lib/aws-lambda';
+import { CfnPermission, Function as LambdaFunction } from 'aws-cdk-lib/aws-lambda';
 import { RemovalPolicy, Stack } from 'aws-cdk-lib';
 import {
   AwsCustomResource,
@@ -51,7 +50,7 @@ const { userPool } = backend.auth.resources;
 const { userPoolArn } = userPool;
 
 // ── DynamoDB table for keep-open overrides ────────────────────────────────────
-const overridesTable = new Table(apiStack, 'FacilityOverrides', {
+new Table(apiStack, 'FacilityOverrides', {
   tableName: 'FacilityOverrides',
   partitionKey: { name: 'facilityId', type: AttributeType.STRING },
   billingMode: BillingMode.PAY_PER_REQUEST,
@@ -97,8 +96,11 @@ updateFacilitiesFn.addToRolePolicy(
   }),
 );
 
-// Construct the table ARN from each Lambda's own stack to avoid cross-stack circular deps.
-// TABLE_NAME is hardcoded in each function's resource.ts so no env var flows from this stack.
+// Grant DynamoDB access by constructing the ARN within each Lambda's own nested stack
+// (using pseudo-params only — no cross-stack CFN Export/Import). TABLE_NAME is already
+// hardcoded in each function's resource.ts so nothing flows from this stack to theirs.
+const TABLE_LITERAL = 'FacilityOverrides';
+
 for (const [fn, actions] of [
   [getKeepOpenFn, ['dynamodb:BatchGetItem', 'dynamodb:GetItem']],
   [updateKeepOpenFn, ['dynamodb:PutItem', 'dynamodb:DeleteItem']],
@@ -109,10 +111,12 @@ for (const [fn, actions] of [
       effect: Effect.ALLOW,
       actions,
       resources: [
+        // Stack.of(fn) is the Lambda's own nested stack — region/account are
+        // CFN pseudo-params (AWS::Region / AWS::AccountId), not cross-stack refs.
         Stack.of(fn).formatArn({
           service: 'dynamodb',
           resource: 'table',
-          resourceName: overridesTable.tableName,
+          resourceName: TABLE_LITERAL,
         }),
       ],
     }),
@@ -185,9 +189,28 @@ usersResource
   );
 
 // ── EventBridge rule: nightly reset at midnight CT (06:00 UTC; ~1h DST drift accepted) ──
+//
+// LambdaFunctionTarget adds a CfnPermission to the Lambda's nested stack with sourceArn
+// pointing back to this API stack — that creates a bidirectional cross-stack reference
+// (cycle). Instead:
+//   1. Create the CfnPermission HERE in apiStack (one-directional: apiStack → Lambda stack)
+//   2. Use a plain IRuleTarget that returns the Lambda ARN without calling addPermission
+new CfnPermission(apiStack, 'AutoResetInvokePermission', {
+  action: 'lambda:InvokeFunction',
+  functionName: autoResetFn.functionArn,
+  principal: 'events.amazonaws.com',
+});
+
+const autoResetTarget: IRuleTarget = {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  bind: (_rule: IRule, _id?: string): RuleTargetConfig => ({
+    arn: autoResetFn.functionArn,
+  }),
+};
+
 new Rule(apiStack, 'NightlyResetRule', {
   schedule: Schedule.cron({ minute: '0', hour: '6' }),
-  targets: [new LambdaFunctionTarget(autoResetFn)],
+  targets: [autoResetTarget],
 });
 
 // ── Add cjcarsley to SuperAdmin group (idempotent) ────────────────────────────
