@@ -10,6 +10,11 @@ export default function Header() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <div className={styles.brand}>
+          <img
+            src="/dchd_white.png"
+            alt={t('header.logoAlt')}
+            className={styles.logo}
+          />
           <span className={styles.title}>{t('app.title')}</span>
         </div>
 
@@ -21,7 +26,7 @@ export default function Header() {
               <NavLink
                 to="/"
                 className={({ isActive }) =>
-                  `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
+                  `${styles.navLink} ${styles.navLinkLogin} ${isActive ? styles.navLinkActive : ''}`
                 }
                 end
               >
