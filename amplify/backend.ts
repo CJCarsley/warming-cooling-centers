@@ -10,7 +10,7 @@ import { Rule, Schedule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Function as LambdaFunction } from 'aws-cdk-lib/aws-lambda';
-import { RemovalPolicy } from 'aws-cdk-lib';
+import { RemovalPolicy, Stack } from 'aws-cdk-lib';
 import {
   AwsCustomResource,
   AwsCustomResourcePolicy,
@@ -77,9 +77,6 @@ updateStatusFn.addToRolePolicy(
 
 getUsersFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 updateFacilitiesFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
-getKeepOpenFn.addEnvironment('TABLE_NAME', overridesTable.tableName);
-updateKeepOpenFn.addEnvironment('TABLE_NAME', overridesTable.tableName);
-autoResetFn.addEnvironment('TABLE_NAME', overridesTable.tableName);
 
 getUsersFn.addToRolePolicy(
   new PolicyStatement({
@@ -100,9 +97,27 @@ updateFacilitiesFn.addToRolePolicy(
   }),
 );
 
-overridesTable.grantReadData(getKeepOpenFn);
-overridesTable.grantWriteData(updateKeepOpenFn);
-overridesTable.grantReadData(autoResetFn);
+// Construct the table ARN from each Lambda's own stack to avoid cross-stack circular deps.
+// TABLE_NAME is hardcoded in each function's resource.ts so no env var flows from this stack.
+for (const [fn, actions] of [
+  [getKeepOpenFn, ['dynamodb:BatchGetItem', 'dynamodb:GetItem']],
+  [updateKeepOpenFn, ['dynamodb:PutItem', 'dynamodb:DeleteItem']],
+  [autoResetFn, ['dynamodb:GetItem']],
+] as [LambdaFunction, string[]][]) {
+  fn.addToRolePolicy(
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions,
+      resources: [
+        Stack.of(fn).formatArn({
+          service: 'dynamodb',
+          resource: 'table',
+          resourceName: overridesTable.tableName,
+        }),
+      ],
+    }),
+  );
+}
 
 // ── API Gateway ───────────────────────────────────────────────────────────────
 const authorizer = new CognitoUserPoolsAuthorizer(
