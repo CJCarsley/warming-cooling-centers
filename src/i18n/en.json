@@ -72,7 +72,8 @@
     "google": "Google Maps",
     "waze": "Waze",
     "apple": "Apple Maps",
-    "viaAria": "Get directions to {{name}} via {{service}}"
+    "viaAria": "Get directions to {{name}} via {{service}}",
+    "chooseApp": "Choose a navigation app"
   },
   "nearby": {
     "heading": "Nearby Facilities",
