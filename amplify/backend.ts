@@ -5,11 +5,10 @@ import {
   LambdaIntegration,
   RestApi,
 } from 'aws-cdk-lib/aws-apigateway';
-import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { IRule, IRuleTarget, Rule, RuleTargetConfig, Schedule } from 'aws-cdk-lib/aws-events';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { CfnPermission, Function as LambdaFunction } from 'aws-cdk-lib/aws-lambda';
-import { RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { Stack } from 'aws-cdk-lib';
 import {
   AwsCustomResource,
   AwsCustomResourcePolicy,
@@ -49,15 +48,10 @@ const apiStack = backend.createStack('FacilityStatusApiStack');
 const { userPool } = backend.auth.resources;
 const { userPoolArn } = userPool;
 
-// ── DynamoDB table for keep-open overrides ────────────────────────────────────
-new Table(apiStack, 'FacilityOverrides', {
-  tableName: 'FacilityOverrides',
-  partitionKey: { name: 'facilityId', type: AttributeType.STRING },
-  billingMode: BillingMode.PAY_PER_REQUEST,
-  removalPolicy: RemovalPolicy.RETAIN,
-});
-
 // ── Lambda environment variables & IAM permissions ───────────────────────────
+// Note: the FacilityOverrides DynamoDB table is managed outside CDK (pre-created,
+// persists via RETAIN policy from feature/auto-reset branch initial deploy).
+// Lambdas reference it by the hardcoded name 'FacilityOverrides' in resource.ts.
 // Cast IFunction → Function to access addEnvironment / addToRolePolicy
 const updateStatusFn = backend.updateStatus.resources.lambda as LambdaFunction;
 const getUsersFn = backend.getUsersAndFacilities.resources.lambda as LambdaFunction;
