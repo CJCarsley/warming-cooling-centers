@@ -5,8 +5,11 @@ import {
   LambdaIntegration,
   RestApi,
 } from 'aws-cdk-lib/aws-apigateway';
+import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
+import { IRule, IRuleTarget, Rule, RuleTargetConfig, Schedule } from 'aws-cdk-lib/aws-events';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
-import { Function as LambdaFunction } from 'aws-cdk-lib/aws-lambda';
+import { CfnPermission, Function as LambdaFunction } from 'aws-cdk-lib/aws-lambda';
+import { RemovalPolicy, Stack } from 'aws-cdk-lib';
 import {
   AwsCustomResource,
   AwsCustomResourcePolicy,
@@ -16,12 +19,18 @@ import { auth } from './auth/resource';
 import { updateStatus } from './functions/updateStatus/resource';
 import { getUsersAndFacilities } from './functions/getUsersAndFacilities/resource';
 import { updateUserFacilities } from './functions/updateUserFacilities/resource';
+import { getKeepOpen } from './functions/getKeepOpen/resource';
+import { updateKeepOpen } from './functions/updateKeepOpen/resource';
+import { autoResetFacilities } from './functions/autoResetFacilities/resource';
 
 const backend = defineBackend({
   auth,
   updateStatus,
   getUsersAndFacilities,
   updateUserFacilities,
+  getKeepOpen,
+  updateKeepOpen,
+  autoResetFacilities,
 });
 
 // Password policy via CDK override (not exposed in defineAuth API)
@@ -40,11 +49,22 @@ const apiStack = backend.createStack('FacilityStatusApiStack');
 const { userPool } = backend.auth.resources;
 const { userPoolArn } = userPool;
 
+// ── DynamoDB table for keep-open overrides ────────────────────────────────────
+new Table(apiStack, 'FacilityOverrides', {
+  tableName: 'FacilityOverrides',
+  partitionKey: { name: 'facilityId', type: AttributeType.STRING },
+  billingMode: BillingMode.PAY_PER_REQUEST,
+  removalPolicy: RemovalPolicy.RETAIN,
+});
+
 // ── Lambda environment variables & IAM permissions ───────────────────────────
 // Cast IFunction → Function to access addEnvironment / addToRolePolicy
 const updateStatusFn = backend.updateStatus.resources.lambda as LambdaFunction;
 const getUsersFn = backend.getUsersAndFacilities.resources.lambda as LambdaFunction;
 const updateFacilitiesFn = backend.updateUserFacilities.resources.lambda as LambdaFunction;
+const getKeepOpenFn = backend.getKeepOpen.resources.lambda as LambdaFunction;
+const updateKeepOpenFn = backend.updateKeepOpen.resources.lambda as LambdaFunction;
+const autoResetFn = backend.autoResetFacilities.resources.lambda as LambdaFunction;
 
 updateStatusFn.addToRolePolicy(
   new PolicyStatement({
@@ -76,6 +96,33 @@ updateFacilitiesFn.addToRolePolicy(
   }),
 );
 
+// Grant DynamoDB access by constructing the ARN within each Lambda's own nested stack
+// (using pseudo-params only — no cross-stack CFN Export/Import). TABLE_NAME is already
+// hardcoded in each function's resource.ts so nothing flows from this stack to theirs.
+const TABLE_LITERAL = 'FacilityOverrides';
+
+for (const [fn, actions] of [
+  [getKeepOpenFn, ['dynamodb:BatchGetItem', 'dynamodb:GetItem']],
+  [updateKeepOpenFn, ['dynamodb:PutItem', 'dynamodb:DeleteItem']],
+  [autoResetFn, ['dynamodb:GetItem']],
+] as [LambdaFunction, string[]][]) {
+  fn.addToRolePolicy(
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions,
+      resources: [
+        // Stack.of(fn) is the Lambda's own nested stack — region/account are
+        // CFN pseudo-params (AWS::Region / AWS::AccountId), not cross-stack refs.
+        Stack.of(fn).formatArn({
+          service: 'dynamodb',
+          resource: 'table',
+          resourceName: TABLE_LITERAL,
+        }),
+      ],
+    }),
+  );
+}
+
 // ── API Gateway ───────────────────────────────────────────────────────────────
 const authorizer = new CognitoUserPoolsAuthorizer(
   apiStack,
@@ -98,13 +145,30 @@ const api = new RestApi(apiStack, 'FacilityStatusApi', {
   },
 });
 
-// POST /facilities/status — facility status toggle (existing)
-api.root
-  .addResource('facilities')
+// POST /facilities/status — facility status toggle
+// GET  /facilities/keep-open — fetch keep-open overrides for caller's facilities
+// PATCH /facilities/keep-open — set or clear a keep-open override
+const facilitiesResource = api.root.addResource('facilities');
+
+facilitiesResource
   .addResource('status')
   .addMethod('POST', new LambdaIntegration(backend.updateStatus.resources.lambda), {
     authorizer,
   });
+
+const keepOpenResource = facilitiesResource.addResource('keep-open');
+
+keepOpenResource.addMethod(
+  'GET',
+  new LambdaIntegration(backend.getKeepOpen.resources.lambda),
+  { authorizer },
+);
+
+keepOpenResource.addMethod(
+  'PATCH',
+  new LambdaIntegration(backend.updateKeepOpen.resources.lambda),
+  { authorizer },
+);
 
 // GET /admin/users — list all users + live facility data
 // PATCH /admin/users/facilities — add/remove a facility assignment
@@ -124,9 +188,32 @@ usersResource
     { authorizer },
   );
 
+// ── EventBridge rule: nightly reset at midnight CT (06:00 UTC; ~1h DST drift accepted) ──
+//
+// LambdaFunctionTarget adds a CfnPermission to the Lambda's nested stack with sourceArn
+// pointing back to this API stack — that creates a bidirectional cross-stack reference
+// (cycle). Instead:
+//   1. Create the CfnPermission HERE in apiStack (one-directional: apiStack → Lambda stack)
+//   2. Use a plain IRuleTarget that returns the Lambda ARN without calling addPermission
+new CfnPermission(apiStack, 'AutoResetInvokePermission', {
+  action: 'lambda:InvokeFunction',
+  functionName: autoResetFn.functionArn,
+  principal: 'events.amazonaws.com',
+});
+
+const autoResetTarget: IRuleTarget = {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  bind: (_rule: IRule, _id?: string): RuleTargetConfig => ({
+    arn: autoResetFn.functionArn,
+  }),
+};
+
+new Rule(apiStack, 'NightlyResetRule', {
+  schedule: Schedule.cron({ minute: '0', hour: '6' }),
+  targets: [autoResetTarget],
+});
+
 // ── Add cjcarsley to SuperAdmin group (idempotent) ────────────────────────────
-// Ignores UserNotFoundException in case the user hasn't registered yet —
-// re-run `amplify sandbox` or `amplify deploy` after the account is created.
 const addSuperAdminCall = {
   service: 'CognitoIdentityServiceProvider',
   action: 'adminAddUserToGroup',
