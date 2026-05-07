@@ -5,6 +5,7 @@
     "facilityListLabel": "Text alternative for map",
     "facilityListHeading": "All Warming and Cooling Centers",
     "facilityTableCaption": "Complete list of warming and cooling centers in Douglas County, Nebraska",
+    "openFacility": "Open details for {{name}}",
     "loading": "Loading map data…",
     "loadError": "Failed to load map. Please refresh the page."
   },

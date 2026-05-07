@@ -37,7 +37,7 @@
 }
 
 .backLink:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -75,7 +75,7 @@
 }
 
 .signOutBtn:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -107,7 +107,7 @@
 }
 
 .searchInput:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 0;
   border-color: var(--color-focus);
 }
@@ -150,7 +150,7 @@
 }
 
 .retryBtn:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -275,7 +275,7 @@
 }
 
 .editBtn:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -364,7 +364,7 @@
 }
 
 .modalCloseBtn:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -422,7 +422,7 @@
 }
 
 .facilityCheckbox:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -535,6 +535,26 @@
 .toastError {
   background: #c62828;
   color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonCell {
+    animation: none;
+    background: #e0e4e8;
+  }
+  .checkboxSpinner {
+    animation: none;
+    opacity: 0.5;
+  }
+  .toast {
+    animation: none;
+  }
+  .signOutBtn,
+  .retryBtn,
+  .editBtn,
+  .modalCloseBtn {
+    transition: none;
+  }
 }
 
 /* ── Screen-reader-only utility ───────────────────────────────────────────── */

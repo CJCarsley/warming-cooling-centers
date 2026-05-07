@@ -45,7 +45,7 @@
 }
 
 .adminNavLink:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -68,7 +68,7 @@
 }
 
 .signOutBtn:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -224,7 +224,7 @@
 }
 
 .tooltipBtn:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -268,7 +268,7 @@
 }
 
 .toggleBtn:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -374,7 +374,7 @@
 }
 
 .btnPrimary:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -394,8 +394,22 @@
 }
 
 .btnSecondary:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-top-color: transparent;
+    opacity: 0.6;
+  }
+  .toggleBtn,
+  .signOutBtn,
+  .btnPrimary,
+  .btnSecondary {
+    transition: none;
+  }
 }
 
 /* Screen-reader-only utility */

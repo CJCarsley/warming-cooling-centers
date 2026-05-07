@@ -31,20 +31,9 @@ function SnowflakeSVG() {
   );
 }
 
-function DualSVG() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
-      <circle cx="14" cy="14" r="12" fill="#D14B00"/>
-      <path d="M14 2A12 12 0 0 1 14 26Z" fill="#1565C0"/>
-      <circle cx="14" cy="14" r="12" fill="none" stroke="white" strokeWidth="1.5"/>
-    </svg>
-  );
-}
-
 const LEGEND_ITEMS = [
   { key: 'warming', Icon: FlameSVG },
   { key: 'cooling', Icon: SnowflakeSVG },
-  { key: 'dual',    Icon: DualSVG },
 ] as const;
 
 export default function MapLegend() {
