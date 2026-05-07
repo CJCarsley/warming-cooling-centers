@@ -129,7 +129,7 @@ export default function MapViewComponent() {
     const search = new Search({ view });
     const locate = new Locate({ view });
 
-    const basemapIds = ['community', 'high-contrast', 'streets-navigation-vector', 'satellite'];
+    const basemapIds = ['topo-vector', 'dark-gray-vector', 'streets-navigation-vector', 'satellite'];
     const basemapGallery = new BasemapGallery({
       view,
       source: new LocalBasemapsSource({
