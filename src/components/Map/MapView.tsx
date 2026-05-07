@@ -2,10 +2,14 @@ import { useRef, useState, useEffect, useCallback, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import Search from '@arcgis/core/widgets/Search';
 import Locate from '@arcgis/core/widgets/Locate';
+import BasemapGallery from '@arcgis/core/widgets/BasemapGallery';
+import LocalBasemapsSource from '@arcgis/core/widgets/BasemapGallery/support/LocalBasemapsSource';
+import Expand from '@arcgis/core/widgets/Expand';
+import Basemap from '@arcgis/core/Basemap';
 import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer';
 import Graphic from '@arcgis/core/Graphic';
 import Point from '@arcgis/core/geometry/Point';
-import SimpleMarkerSymbol from '@arcgis/core/symbols/SimpleMarkerSymbol';
+import PictureMarkerSymbol from '@arcgis/core/symbols/PictureMarkerSymbol';
 import type EsriMap from '@arcgis/core/Map';
 import { useMapView } from '../../hooks/useMapView';
 import { useFeatureLayer } from '../../hooks/useFeatureLayer';
@@ -109,14 +113,14 @@ export default function MapViewComponent() {
               flashTimersRef.current.forEach(clearTimeout);
               flashTimersRef.current = [];
               pinLayer.graphics.removeAll();
+              const pinSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32"><path d="M12 0C7.6 0 4 3.6 4 8C4 14.5 12 28 12 28C12 28 20 14.5 20 8C20 3.6 16.4 0 12 0Z" fill="#CC2222" stroke="white" stroke-width="1"/><circle cx="12" cy="8" r="3.5" fill="white"/></svg>`;
               pinLayer.graphics.add(
                 new Graphic({
                   geometry: new Point({ latitude, longitude }),
-                  symbol: new SimpleMarkerSymbol({
-                    style: 'circle',
-                    color: [255, 215, 0, 0.9],
-                    size: '18px',
-                    outline: { color: [80, 60, 0, 1], width: 2 },
+                  symbol: new PictureMarkerSymbol({
+                    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(pinSvg)}`,
+                    width: 24,
+                    height: 32,
                   }),
                 }),
               );
@@ -145,8 +149,25 @@ export default function MapViewComponent() {
     const search = new Search({ view });
     const locate = new Locate({ view });
 
+    const basemapIds = ['topo-vector', 'dark-gray-vector', 'streets-navigation-vector', 'satellite'];
+    const basemapGallery = new BasemapGallery({
+      view,
+      source: new LocalBasemapsSource({
+        basemaps: basemapIds
+          .map((id) => Basemap.fromId(id))
+          .filter((b): b is Basemap => b != null),
+      }),
+    });
+    const basemapExpand = new Expand({
+      view,
+      content: basemapGallery,
+      expandTooltip: 'Switch Basemap',
+      collapseTooltip: 'Close Basemap Switcher',
+    });
+
     view.ui.add(search, 'top-right');
     view.ui.add(locate, 'top-right');
+    view.ui.add(basemapExpand, 'top-right');
 
     // ArcGIS TS typings don't expose 'select-result' in on() overloads; cast to any.
     // Use .latitude/.longitude (not .x/.y) — ArcGIS auto-converts to WGS84 regardless of source SR.
@@ -170,6 +191,8 @@ export default function MapViewComponent() {
       locateHandle.remove();
       search.destroy();
       locate.destroy();
+      basemapExpand.destroy();
+      basemapGallery.destroy();
     };
   }, [view]);
 

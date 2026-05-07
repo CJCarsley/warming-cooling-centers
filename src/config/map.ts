@@ -2,7 +2,7 @@ export const MAP_CONFIG = {
   centerLng: -95.94,
   centerLat: 41.26,
   zoom: 11,
-  basemap: 'streets-navigation-vector',
+  basemap: 'topo-vector',
   featureLayerUrl:
     'https://services.arcgis.com/pDAi2YK0L0QxVJHj/arcgis/rest/services/Warming_and_Cooling_Centers/FeatureServer/0',
 } as const;

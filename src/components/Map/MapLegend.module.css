@@ -60,60 +60,12 @@
   line-height: 1;
 }
 
-/* Shape base */
+/* SVG symbol container */
 .symbol {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-}
-
-/* Circle — warming */
-.circle {
-  border-radius: 50%;
-}
-
-/* Diamond — cooling */
-.diamond {
-  transform: rotate(45deg);
-  border-radius: 1px;
-  width: 11px;
-  height: 11px;
-  margin: 0 1.5px;
-}
-
-/* Square — dual */
-.square {
-  border-radius: 2px;
-}
-
-/* Triangle — inactive (CSS triangle via borders) */
-.triangle {
-  width: 0;
-  height: 0;
-  background: transparent !important;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 14px solid currentColor;
-}
-
-/* Colors */
-.colorWarming {
-  background-color: #d14b00;
-  color: #d14b00;
-}
-
-.colorCooling {
-  background-color: #1565c0;
-  color: #1565c0;
-}
-
-.colorDual {
-  background-color: #6a1b9a;
-  color: #6a1b9a;
-}
-
-.colorInactive {
-  background-color: #757575;
-  color: #757575;
+  width: 20px;
+  height: 20px;
 }
