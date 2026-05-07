@@ -120,7 +120,12 @@
       "warming": "warming",
       "cooling": "cooling",
       "adminNavLabel": "Admin navigation",
-      "unauthorizedAccess": "You do not have permission to access that page."
+      "unauthorizedAccess": "You do not have permission to access that page.",
+      "keepOpen": "Keep Open",
+      "keepOpenTooltip": "This facility will be skipped during the nightly midnight reset. Toggling Warming or Cooling will clear this override.",
+      "keepOpenAria": "Keep {{name}} open overnight",
+      "keepOpenActive": "Midnight reset override active",
+      "conflictWarning": "Note: enabling {{newType}} will automatically deactivate {{clearType}}."
     },
     "users": {
       "heading": "User Management",

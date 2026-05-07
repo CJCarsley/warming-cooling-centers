@@ -120,7 +120,12 @@
       "warming": "calefacción",
       "cooling": "refrigeración",
       "adminNavLabel": "Navegación de administrador",
-      "unauthorizedAccess": "No tiene permiso para acceder a esa página."
+      "unauthorizedAccess": "No tiene permiso para acceder a esa página.",
+      "keepOpen": "Mantener Abierto",
+      "keepOpenTooltip": "Este centro se omitirá durante el reinicio nocturno a medianoche. Cambiar Calefacción o Refrigeración borrará esta excepción.",
+      "keepOpenAria": "Mantener {{name}} abierto durante la noche",
+      "keepOpenActive": "Excepción de reinicio nocturno activa",
+      "conflictWarning": "Nota: activar {{newType}} desactivará automáticamente {{clearType}}."
     },
     "users": {
       "heading": "Gestión de Usuarios",

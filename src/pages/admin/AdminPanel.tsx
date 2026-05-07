@@ -21,6 +21,7 @@ interface PendingToggle {
   facilityName: string;
   field: EditStatusField;
   newValue: boolean;
+  clearField?: EditStatusField;
 }
 
 interface ArcGISQueryResponse {
@@ -52,6 +53,8 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pendingToggle, setPendingToggle] = useState<PendingToggle | null>(null);
   const [updatingKeys, setUpdatingKeys] = useState<Set<string>>(new Set());
+  const [keepOpenIds, setKeepOpenIds] = useState<Set<number>>(new Set());
+  const [keepOpenPendingIds, setKeepOpenPendingIds] = useState<Set<number>>(new Set());
   const [announcement, setAnnouncement] = useState('');
   const dialogRef = useRef<HTMLDialogElement>(null);
   const cancelBtnRef = useRef<HTMLButtonElement>(null);
@@ -87,13 +90,26 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
           f: 'json',
         });
 
-        const res = await fetch(`${FEATURE_LAYER_URL}/query?${params.toString()}`);
-        const data = (await res.json()) as ArcGISQueryResponse;
+        const [facilitiesRes, session] = await Promise.all([
+          fetch(`${FEATURE_LAYER_URL}/query?${params.toString()}`),
+          fetchAuthSession(),
+        ]);
 
+        const data = (await facilitiesRes.json()) as ArcGISQueryResponse;
         if (data.error) throw new Error(data.error.message);
 
         const loaded = (data.features ?? []).map((f) => f.attributes);
         if (!cancelled) setFacilities(loaded);
+
+        // Load keep-open overrides
+        const idToken = session.tokens?.idToken?.toString() ?? '';
+        const keepOpenRes = await fetch(`${resolvedApiBase}facilities/keep-open`, {
+          headers: { Authorization: idToken },
+        });
+        if (keepOpenRes.ok) {
+          const keepOpenData = (await keepOpenRes.json()) as { keepOpenIds: number[] };
+          if (!cancelled) setKeepOpenIds(new Set(keepOpenData.keepOpenIds));
+        }
       } catch (err) {
         if (!cancelled) setLoadError(t('common.error'));
         console.error('AdminPanel load error:', err);
@@ -120,11 +136,23 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
 
   const initiateToggle = useCallback(
     (facility: AdminFacility, field: EditStatusField) => {
+      const newValue = facility[field] !== 'Yes';
+      let clearField: EditStatusField | undefined;
+
+      if (newValue) {
+        const otherField: EditStatusField =
+          field === 'Warming_Active' ? 'Cooling_Active' : 'Warming_Active';
+        if (facility[otherField] === 'Yes') {
+          clearField = otherField;
+        }
+      }
+
       setPendingToggle({
         facilityId: facility.ObjectID,
         facilityName: facility.Name,
         field,
-        newValue: facility[field] !== 'Yes',
+        newValue,
+        clearField,
       });
     },
     [],
@@ -137,12 +165,19 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
 
   const handleConfirm = useCallback(async () => {
     if (!pendingToggle) return;
-    const { facilityId, field, newValue } = pendingToggle;
+    const { facilityId, field, newValue, clearField } = pendingToggle;
     const key = `${facilityId}-${field}`;
+    const clearKey = clearField ? `${facilityId}-${clearField}` : null;
 
     dialogRef.current?.close();
     setPendingToggle(null);
-    setUpdatingKeys((prev) => new Set(prev).add(key));
+
+    setUpdatingKeys((prev) => {
+      const next = new Set(prev);
+      next.add(key);
+      if (clearKey) next.add(clearKey);
+      return next;
+    });
 
     try {
       const session = await fetchAuthSession();
@@ -150,23 +185,42 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
 
       const res = await fetch(`${resolvedApiBase}facilities/status`, {
         method: 'POST',
-        headers: {
-          Authorization: idToken,
-          'Content-Type': 'application/json',
-        },
+        headers: { Authorization: idToken, 'Content-Type': 'application/json' },
         body: JSON.stringify({ featureId: facilityId, field, value: newValue }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+      if (clearField) {
+        const clearRes = await fetch(`${resolvedApiBase}facilities/status`, {
+          method: 'POST',
+          headers: { Authorization: idToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ featureId: facilityId, field: clearField, value: false }),
+        });
+        if (!clearRes.ok) throw new Error(`HTTP ${clearRes.status}`);
+      }
+
+      // Clear keep-open override on any Warming/Cooling toggle
+      if (keepOpenIds.has(facilityId)) {
+        void fetch(`${resolvedApiBase}facilities/keep-open`, {
+          method: 'PATCH',
+          headers: { Authorization: idToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ facilityId, keepOpen: false }),
+        }).then(() => {
+          setKeepOpenIds((prev) => {
+            const next = new Set(prev);
+            next.delete(facilityId);
+            return next;
+          });
+        });
       }
 
       setFacilities((prev) =>
-        prev.map((f) =>
-          f.ObjectID === facilityId
-            ? { ...f, [field]: newValue ? 'Yes' : 'No', EditDate: Date.now() }
-            : f,
-        ),
+        prev.map((f) => {
+          if (f.ObjectID !== facilityId) return f;
+          const updated = { ...f, [field]: newValue ? 'Yes' : 'No', EditDate: Date.now() };
+          if (clearField) return { ...updated, [clearField]: 'No' };
+          return updated;
+        }),
       );
 
       setAnnouncement(t('admin.panel.updateSuccess'));
@@ -177,10 +231,56 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
       setUpdatingKeys((prev) => {
         const next = new Set(prev);
         next.delete(key);
+        if (clearKey) next.delete(clearKey);
         return next;
       });
     }
-  }, [pendingToggle, t]);
+  }, [pendingToggle, keepOpenIds, t]);
+
+  const handleKeepOpenToggle = useCallback(
+    async (facility: AdminFacility) => {
+      const facilityId = facility.ObjectID;
+      const nextValue = !keepOpenIds.has(facilityId);
+
+      setKeepOpenPendingIds((prev) => new Set(prev).add(facilityId));
+
+      try {
+        const session = await fetchAuthSession();
+        const idToken = session.tokens?.idToken?.toString() ?? '';
+
+        const res = await fetch(`${resolvedApiBase}facilities/keep-open`, {
+          method: 'PATCH',
+          headers: { Authorization: idToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ facilityId, keepOpen: nextValue }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        setKeepOpenIds((prev) => {
+          const next = new Set(prev);
+          if (nextValue) next.add(facilityId);
+          else next.delete(facilityId);
+          return next;
+        });
+      } catch (err) {
+        console.error('keepOpen toggle error:', err);
+        setAnnouncement(t('admin.panel.updateError'));
+      } finally {
+        setKeepOpenPendingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(facilityId);
+          return next;
+        });
+      }
+    },
+    [keepOpenIds, t],
+  );
+
+  const conflictType = pendingToggle?.clearField === 'Warming_Active'
+    ? t('admin.panel.warming')
+    : t('admin.panel.cooling');
+  const newType = pendingToggle?.field === 'Warming_Active'
+    ? t('admin.panel.warming')
+    : t('admin.panel.cooling');
 
   const confirmMessage = pendingToggle
     ? t('admin.panel.confirmMessage', {
@@ -188,12 +288,19 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
         status: pendingToggle.newValue
           ? t('admin.panel.open')
           : t('admin.panel.closed'),
-        type:
-          pendingToggle.field === 'Warming_Active'
-            ? t('admin.panel.warming')
-            : t('admin.panel.cooling'),
+        type: pendingToggle.field === 'Warming_Active'
+          ? t('admin.panel.warming')
+          : t('admin.panel.cooling'),
       })
     : '';
+
+  const conflictWarning =
+    pendingToggle?.clearField && pendingToggle.newValue
+      ? t('admin.panel.conflictWarning', {
+          newType,
+          clearType: conflictType,
+        })
+      : '';
 
   return (
     <div className={styles.panel}>
@@ -259,10 +366,15 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
               const coolingKey = `${facility.ObjectID}-Cooling_Active`;
               const isWarmingActive = facility.Warming_Active === 'Yes';
               const isCoolingActive = facility.Cooling_Active === 'Yes';
+              const isKeptOpen = keepOpenIds.has(facility.ObjectID);
+              const isKeepOpenPending = keepOpenPendingIds.has(facility.ObjectID);
               const editTs = facility.EditDate;
 
               return (
-                <li key={facility.ObjectID} className={styles.facilityCard}>
+                <li
+                  key={facility.ObjectID}
+                  className={`${styles.facilityCard} ${isKeptOpen ? styles.facilityCardKeptOpen : ''}`}
+                >
                   <div className={styles.facilityInfo}>
                     <h3 className={styles.facilityName}>{facility.Name}</h3>
                     <p className={styles.facilityAddress}>{facility.Address}</p>
@@ -271,23 +383,52 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
                         {t('admin.panel.lastUpdated')}: {formatDate(editTs)}
                       </p>
                     )}
+                    {isKeptOpen && (
+                      <p className={styles.keepOpenBadge}>
+                        {t('admin.panel.keepOpenActive')}
+                      </p>
+                    )}
                   </div>
 
-                  <div className={styles.toggleRow}>
-                    <ToggleSwitch
-                      label={t('admin.panel.warmingActive')}
-                      facilityName={facility.Name}
-                      isActive={isWarmingActive}
-                      isPending={updatingKeys.has(warmingKey)}
-                      onToggle={() => initiateToggle(facility, 'Warming_Active')}
-                    />
-                    <ToggleSwitch
-                      label={t('admin.panel.coolingActive')}
-                      facilityName={facility.Name}
-                      isActive={isCoolingActive}
-                      isPending={updatingKeys.has(coolingKey)}
-                      onToggle={() => initiateToggle(facility, 'Cooling_Active')}
-                    />
+                  <div className={styles.cardControls}>
+                    <div className={styles.toggleRow}>
+                      <ToggleSwitch
+                        label={t('admin.panel.warmingActive')}
+                        facilityName={facility.Name}
+                        isActive={isWarmingActive}
+                        isPending={updatingKeys.has(warmingKey)}
+                        onToggle={() => initiateToggle(facility, 'Warming_Active')}
+                      />
+                      <ToggleSwitch
+                        label={t('admin.panel.coolingActive')}
+                        facilityName={facility.Name}
+                        isActive={isCoolingActive}
+                        isPending={updatingKeys.has(coolingKey)}
+                        onToggle={() => initiateToggle(facility, 'Cooling_Active')}
+                      />
+                    </div>
+
+                    <div className={styles.keepOpenRow}>
+                      <label className={styles.keepOpenLabel}>
+                        <input
+                          type="checkbox"
+                          className={styles.keepOpenCheckbox}
+                          checked={isKeptOpen}
+                          disabled={isKeepOpenPending}
+                          onChange={() => void handleKeepOpenToggle(facility)}
+                          aria-label={t('admin.panel.keepOpenAria', { name: facility.Name })}
+                        />
+                        {t('admin.panel.keepOpen')}
+                      </label>
+                      <button
+                        type="button"
+                        className={styles.tooltipBtn}
+                        aria-label={t('admin.panel.keepOpenTooltip')}
+                        title={t('admin.panel.keepOpenTooltip')}
+                      >
+                        <span aria-hidden="true">ⓘ</span>
+                      </button>
+                    </div>
                   </div>
                 </li>
               );
@@ -307,6 +448,9 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
           {t('admin.panel.confirmTitle')}
         </h2>
         <p className={styles.dialogMessage}>{confirmMessage}</p>
+        {conflictWarning && (
+          <p className={styles.conflictWarning}>{conflictWarning}</p>
+        )}
         <div className={styles.dialogActions}>
           <button
             type="button"
