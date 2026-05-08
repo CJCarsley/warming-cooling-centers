@@ -152,6 +152,37 @@
       "statusForceChange": "Restablecimiento de contraseña requerido",
       "statusUnknown": "Desconocido"
     },
+    "addFacility": {
+      "buttonLabel": "+ Agregar Nuevo",
+      "buttonAriaLabel": "Agregar un nuevo centro",
+      "modalTitle": "Agregar Nuevo Centro",
+      "step1Title": "Elegir Ubicación",
+      "step2Title": "Detalles del Centro",
+      "dropPinInstruction": "Haga clic en cualquier parte del mapa para colocar un marcador. También puede buscar una dirección arriba.",
+      "coordsLabel": "Lat: {{lat}}, Lon: {{lon}}",
+      "confirmLocation": "Confirmar Ubicación",
+      "backToMap": "← Volver al Mapa",
+      "save": "Guardar Centro",
+      "saving": "Guardando…",
+      "discard": "Descartar y Cancelar",
+      "cancel": "Cancelar",
+      "schemaLoadError": "No se pudieron cargar los campos del formulario. Inténtelo de nuevo.",
+      "reverseGeocodeError": "No se pudo completar automáticamente la dirección de la ubicación seleccionada.",
+      "saveSuccess": "Nuevo centro agregado con éxito.",
+      "saveError": "Error al agregar el centro. Por favor, inténtelo de nuevo.",
+      "mapAriaLabel": "Mapa de ubicación del centro",
+      "pinPlaced": "Marcador colocado en Lat: {{lat}}, Lon: {{lon}}"
+    },
+    "editFacility": {
+      "editLink": "Editar",
+      "cancelLink": "Cancelar",
+      "save": "Guardar Cambios",
+      "saving": "Guardando…",
+      "saveSuccess": "Centro actualizado con éxito.",
+      "saveError": "Error al actualizar el centro. Por favor, inténtelo de nuevo.",
+      "loading": "Cargando datos del centro…",
+      "loadError": "Error al cargar los datos del centro. Por favor, inténtelo de nuevo."
+    },
     "modal": {
       "title": "Gestionar Centros — {{email}}",
       "close": "Cerrar",
