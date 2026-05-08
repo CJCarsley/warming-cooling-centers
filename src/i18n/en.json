@@ -80,7 +80,8 @@
     "close": "Close nearby facilities panel",
     "distanceAria": "{{dist}} away",
     "resultsAnnouncement_one": "Showing 1 nearby center",
-    "resultsAnnouncement_other": "Showing {{count}} nearby centers"
+    "resultsAnnouncement_other": "Showing {{count}} nearby centers",
+    "noActiveFacilities": "No warming or cooling centers are currently open."
   },
   "common": {
     "notAvailable": "Not available",

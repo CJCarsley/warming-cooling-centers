@@ -79,7 +79,8 @@
     "close": "Cerrar panel de instalaciones cercanas",
     "distanceAria": "a {{dist}}",
     "resultsAnnouncement_one": "Mostrando 1 centro cercano",
-    "resultsAnnouncement_other": "Mostrando {{count}} centros cercanos"
+    "resultsAnnouncement_other": "Mostrando {{count}} centros cercanos",
+    "noActiveFacilities": "Actualmente no hay centros de calefacción ni refrigeración abiertos."
   },
   "common": {
     "notAvailable": "No disponible",

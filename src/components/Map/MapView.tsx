@@ -67,14 +67,17 @@ export default function MapViewComponent() {
     [tMap],
   );
 
-  // Announce nearby result count whenever it changes
+  // Announce nearby result count (or empty state) whenever results change
   useEffect(() => {
-    if (nearbyResults.length > 0) {
-      setNearbyAnnouncement(t('nearby.resultsAnnouncement', { count: nearbyResults.length }));
-    } else {
+    if (!nearbyPoint) {
       setNearbyAnnouncement('');
+    } else if (nearbyResults.length > 0) {
+      setNearbyAnnouncement(t('nearby.resultsAnnouncement', { count: nearbyResults.length }));
+    } else if (facilitiesWithLocation.length > 0) {
+      // Facilities loaded but none are active
+      setNearbyAnnouncement(t('nearby.noActiveFacilities'));
     }
-  }, [nearbyResults.length, t]);
+  }, [nearbyPoint, nearbyResults.length, facilitiesWithLocation.length, t]);
 
   useEffect(() => {
     if (!view) return;
@@ -229,7 +232,7 @@ export default function MapViewComponent() {
         />
         <MapLegend />
         <MobileLegendOverlay />
-        {nearbyResults.length > 0 && (
+        {nearbyPoint !== null && facilitiesWithLocation.length > 0 && (
           <NearbyPanel
             results={nearbyResults}
             originPoint={nearbyPoint}

@@ -72,7 +72,8 @@
     "close": "Đóng bảng cơ sở gần đây",
     "distanceAria": "{{dist}} cách xa",
     "resultsAnnouncement_one": "Đang hiển thị 1 trung tâm gần đây",
-    "resultsAnnouncement_other": "Đang hiển thị {{count}} trung tâm gần đây"
+    "resultsAnnouncement_other": "Đang hiển thị {{count}} trung tâm gần đây",
+    "noActiveFacilities": "Hiện không có trung tâm sưởi ấm hay làm mát nào đang mở cửa."
   },
   "directions": {
     "google": "Google Maps",

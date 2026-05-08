@@ -20,8 +20,6 @@ export default function NearbyPanel({ results, originPoint, onClose }: NearbyPan
   const headingId = useId();
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
-  if (!results.length) return null;
-
   return (
     <div className={styles.panel} role="region" aria-labelledby={headingId}>
       <div className={styles.header}>
@@ -38,54 +36,61 @@ export default function NearbyPanel({ results, originPoint, onClose }: NearbyPan
         </button>
       </div>
 
-      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
-      <ul className={styles.list} role="list">
-        {results.map((r, i) => {
-          const isOpen = expandedIdx === i;
-          const btnId = `${headingId}-btn-${i}`;
-          const detailId = `${headingId}-detail-${i}`;
+      {results.length === 0 ? (
+        <p className={styles.emptyState}>{t('nearby.noActiveFacilities')}</p>
+      ) : (
+        /* eslint-disable-next-line jsx-a11y/no-redundant-roles */
+        <ul className={styles.list} role="list">
+          {results.map((r, i) => {
+            const isOpen = expandedIdx === i;
+            const btnId = `${headingId}-btn-${i}`;
+            const detailId = `${headingId}-detail-${i}`;
 
-          return (
-            <li key={r.facility.attributes.ObjectID} className={styles.item}>
-              <button
-                id={btnId}
-                type="button"
-                className={styles.itemBtn}
-                aria-expanded={isOpen}
-                aria-controls={detailId}
-                onClick={() => setExpandedIdx(isOpen ? null : i)}
-              >
-                <span className={styles.rank} aria-hidden="true">{i + 1}</span>
-                <span className={styles.name}>{r.facility.attributes.Name}</span>
-                <span className={styles.dist} aria-label={t('nearby.distanceAria', { dist: formatDist(r.distanceMi) })}>
-                  {formatDist(r.distanceMi)}
-                </span>
-                <span
-                  className={`${styles.arrow} ${isOpen ? styles.arrowOpen : ''}`}
-                  aria-hidden="true"
+            return (
+              <li key={r.facility.attributes.ObjectID} className={styles.item}>
+                <button
+                  id={btnId}
+                  type="button"
+                  className={styles.itemBtn}
+                  aria-expanded={isOpen}
+                  aria-controls={detailId}
+                  onClick={() => setExpandedIdx(isOpen ? null : i)}
                 >
-                  ›
-                </span>
-              </button>
+                  <span className={styles.rank} aria-hidden="true">{i + 1}</span>
+                  <span className={styles.name}>{r.facility.attributes.Name}</span>
+                  <span
+                    className={styles.dist}
+                    aria-label={t('nearby.distanceAria', { dist: formatDist(r.distanceMi) })}
+                  >
+                    {formatDist(r.distanceMi)}
+                  </span>
+                  <span
+                    className={`${styles.arrow} ${isOpen ? styles.arrowOpen : ''}`}
+                    aria-hidden="true"
+                  >
+                    ›
+                  </span>
+                </button>
 
-              {isOpen && (
-                <div
-                  id={detailId}
-                  role="region"
-                  aria-labelledby={btnId}
-                  className={styles.detail}
-                >
-                  <FacilityDetails
-                    facility={r.facility.attributes}
-                    facilityLocation={{ latitude: r.facility.latitude, longitude: r.facility.longitude }}
-                    originPoint={originPoint}
-                  />
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+                {isOpen && (
+                  <div
+                    id={detailId}
+                    role="region"
+                    aria-labelledby={btnId}
+                    className={styles.detail}
+                  >
+                    <FacilityDetails
+                      facility={r.facility.attributes}
+                      facilityLocation={{ latitude: r.facility.latitude, longitude: r.facility.longitude }}
+                      originPoint={originPoint}
+                    />
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
