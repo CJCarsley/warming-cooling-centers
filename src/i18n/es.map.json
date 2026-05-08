@@ -14,7 +14,8 @@
     "warming": "Centro de Calefacción",
     "cooling": "Centro de Refrigeración",
     "dual": "Centro de Calefacción y Refrigeración",
-    "inactive": "Cerrado / Inactivo"
+    "inactive": "Cerrado / Inactivo",
+    "toggleAria": "Alternar leyenda del mapa"
   },
   "facilityType": {
     "warming": "Centro de Calefacción",

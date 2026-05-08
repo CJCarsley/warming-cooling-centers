@@ -16,6 +16,7 @@ import { useFeatureLayer } from '../../hooks/useFeatureLayer';
 import { useNearby } from '../../hooks/useNearby';
 import FacilityPopup from './FacilityPopup';
 import MapLegend from './MapLegend';
+import MobileLegendOverlay from './MobileLegendOverlay';
 import NearbyPanel from './NearbyPanel';
 import type { FacilityAttributes } from '../../types/facility';
 import { getFacilityType } from '../../types/facility';
@@ -227,6 +228,7 @@ export default function MapViewComponent() {
           tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
         />
         <MapLegend />
+        <MobileLegendOverlay />
         {nearbyResults.length > 0 && (
           <NearbyPanel
             results={nearbyResults}
