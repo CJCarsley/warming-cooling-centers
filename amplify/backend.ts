@@ -21,6 +21,8 @@ import { updateUserFacilities } from './functions/updateUserFacilities/resource'
 import { getKeepOpen } from './functions/getKeepOpen/resource';
 import { updateKeepOpen } from './functions/updateKeepOpen/resource';
 import { autoResetFacilities } from './functions/autoResetFacilities/resource';
+import { addFacility } from './functions/addFacility/resource';
+import { updateFacilityAttributes } from './functions/updateFacilityAttributes/resource';
 
 const backend = defineBackend({
   auth,
@@ -30,6 +32,8 @@ const backend = defineBackend({
   getKeepOpen,
   updateKeepOpen,
   autoResetFacilities,
+  addFacility,
+  updateFacilityAttributes,
 });
 
 // Password policy via CDK override (not exposed in defineAuth API)
@@ -59,6 +63,8 @@ const updateFacilitiesFn = backend.updateUserFacilities.resources.lambda as Lamb
 const getKeepOpenFn = backend.getKeepOpen.resources.lambda as LambdaFunction;
 const updateKeepOpenFn = backend.updateKeepOpen.resources.lambda as LambdaFunction;
 const autoResetFn = backend.autoResetFacilities.resources.lambda as LambdaFunction;
+const addFacilityFn = backend.addFacility.resources.lambda as LambdaFunction;
+const updateFacilityAttrsFn = backend.updateFacilityAttributes.resources.lambda as LambdaFunction;
 
 updateStatusFn.addToRolePolicy(
   new PolicyStatement({
@@ -70,6 +76,7 @@ updateStatusFn.addToRolePolicy(
 
 getUsersFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 updateFacilitiesFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
+addFacilityFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 
 getUsersFn.addToRolePolicy(
   new PolicyStatement({
@@ -80,6 +87,17 @@ getUsersFn.addToRolePolicy(
 );
 
 updateFacilitiesFn.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: [
+      'cognito-idp:AdminGetUser',
+      'cognito-idp:AdminUpdateUserAttributes',
+    ],
+    resources: [userPoolArn],
+  }),
+);
+
+addFacilityFn.addToRolePolicy(
   new PolicyStatement({
     effect: Effect.ALLOW,
     actions: [
@@ -163,6 +181,18 @@ keepOpenResource.addMethod(
   new LambdaIntegration(backend.updateKeepOpen.resources.lambda),
   { authorizer },
 );
+
+// POST /facility/add — add a new facility to the feature layer
+// POST /facility/update-attributes — update attributes of an existing facility
+const facilityResource = api.root.addResource('facility');
+
+facilityResource
+  .addResource('add')
+  .addMethod('POST', new LambdaIntegration(backend.addFacility.resources.lambda), { authorizer });
+
+facilityResource
+  .addResource('update-attributes')
+  .addMethod('POST', new LambdaIntegration(backend.updateFacilityAttributes.resources.lambda), { authorizer });
 
 // GET /admin/users — list all users + live facility data
 // PATCH /admin/users/facilities — add/remove a facility assignment

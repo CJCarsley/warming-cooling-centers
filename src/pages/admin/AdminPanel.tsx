@@ -3,7 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
 import { useTranslation } from 'react-i18next';
 import type { AdminFacility, EditStatusField } from '../../types/facility';
+import { getFieldSchema } from '../../utils/fieldSchemaCache';
+import type { FieldDef } from '../../utils/fieldSchemaCache';
 import rawOutputs from '../../../amplify_outputs.json';
+import AddFacilityModal from './AddFacilityModal';
 import styles from './AdminPanel.module.css';
 
 const FEATURE_LAYER_URL =
@@ -29,6 +32,8 @@ interface ArcGISQueryResponse {
   error?: { code: number; message: string };
 }
 
+type RawAttrs = Record<string, string | number | null>;
+
 function formatDate(ts: number | null | undefined): string {
   if (!ts) return '';
   return new Intl.DateTimeFormat(undefined, {
@@ -47,7 +52,9 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
   const { t } = useTranslation();
   const location = useLocation();
   const wasUnauthorized = (location.state as { unauthorized?: boolean })?.unauthorized;
+
   const [email, setEmail] = useState(userEmail);
+  const [idToken, setIdToken] = useState('');
   const [facilities, setFacilities] = useState<AdminFacility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -56,9 +63,23 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
   const [keepOpenIds, setKeepOpenIds] = useState<Set<number>>(new Set());
   const [keepOpenPendingIds, setKeepOpenPendingIds] = useState<Set<number>>(new Set());
   const [announcement, setAnnouncement] = useState('');
+  const [addModalOpen, setAddModalOpen] = useState(false);
+
+  // Edit-in-place state
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedRawAttrs, setExpandedRawAttrs] = useState<RawAttrs | null>(null);
+  const [expandedFields, setExpandedFields] = useState<FieldDef[]>([]);
+  const [editValues, setEditValues] = useState<Record<string, string>>({});
+  const [isExpandLoading, setIsExpandLoading] = useState(false);
+  const [expandError, setExpandError] = useState<string | null>(null);
+  const [isSavingAttrs, setIsSavingAttrs] = useState(false);
+  const [saveAttrsError, setSaveAttrsError] = useState<string | null>(null);
+
   const dialogRef = useRef<HTMLDialogElement>(null);
   const cancelBtnRef = useRef<HTMLButtonElement>(null);
   const announcerRef = useRef<HTMLDivElement>(null);
+  const addNewBtnRef = useRef<HTMLButtonElement>(null);
+  const firstEditFieldRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,34 +98,31 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
           .map((s: string) => s.trim())
           .filter(Boolean);
 
-        if (ids.length === 0) {
-          if (!cancelled) setFacilities([]);
-          return;
-        }
-
-        const params = new URLSearchParams({
-          where: `ObjectID IN (${ids.join(',')})`,
-          outFields:
-            'ObjectID,Name,Address,Warming_Active,Cooling_Active,EditDate',
-          returnGeometry: 'false',
-          f: 'json',
-        });
-
         const [facilitiesRes, session] = await Promise.all([
-          fetch(`${FEATURE_LAYER_URL}/query?${params.toString()}`),
+          ids.length > 0
+            ? fetch(`${FEATURE_LAYER_URL}/query?${new URLSearchParams({
+                where: `ObjectID IN (${ids.join(',')})`,
+                outFields: 'ObjectID,Name,Address,Warming_Active,Cooling_Active,EditDate',
+                returnGeometry: 'false',
+                f: 'json',
+              })}`)
+            : Promise.resolve(null),
           fetchAuthSession(),
         ]);
 
-        const data = (await facilitiesRes.json()) as ArcGISQueryResponse;
-        if (data.error) throw new Error(data.error.message);
+        const tok = session.tokens?.idToken?.toString() ?? '';
+        if (!cancelled) setIdToken(tok);
 
-        const loaded = (data.features ?? []).map((f) => f.attributes);
-        if (!cancelled) setFacilities(loaded);
+        if (ids.length === 0) {
+          if (!cancelled) setFacilities([]);
+        } else if (facilitiesRes) {
+          const data = (await facilitiesRes.json()) as ArcGISQueryResponse;
+          if (data.error) throw new Error(data.error.message);
+          if (!cancelled) setFacilities((data.features ?? []).map((f) => f.attributes));
+        }
 
-        // Load keep-open overrides
-        const idToken = session.tokens?.idToken?.toString() ?? '';
         const keepOpenRes = await fetch(`${resolvedApiBase}facilities/keep-open`, {
-          headers: { Authorization: idToken },
+          headers: { Authorization: tok },
         });
         if (keepOpenRes.ok) {
           const keepOpenData = (await keepOpenRes.json()) as { keepOpenIds: number[] };
@@ -119,12 +137,9 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
     }
 
     void loadFacilities();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [userEmail, t]);
 
-  // Open confirm dialog when a toggle is initiated
   useEffect(() => {
     if (pendingToggle) {
       requestAnimationFrame(() => {
@@ -138,22 +153,12 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
     (facility: AdminFacility, field: EditStatusField) => {
       const newValue = facility[field] !== 'Yes';
       let clearField: EditStatusField | undefined;
-
       if (newValue) {
         const otherField: EditStatusField =
           field === 'Warming_Active' ? 'Cooling_Active' : 'Warming_Active';
-        if (facility[otherField] === 'Yes') {
-          clearField = otherField;
-        }
+        if (facility[otherField] === 'Yes') clearField = otherField;
       }
-
-      setPendingToggle({
-        facilityId: facility.ObjectID,
-        facilityName: facility.Name,
-        field,
-        newValue,
-        clearField,
-      });
+      setPendingToggle({ facilityId: facility.ObjectID, facilityName: facility.Name, field, newValue, clearField });
     },
     [],
   );
@@ -181,11 +186,11 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
 
     try {
       const session = await fetchAuthSession();
-      const idToken = session.tokens?.idToken?.toString() ?? '';
+      const tok = session.tokens?.idToken?.toString() ?? '';
 
       const res = await fetch(`${resolvedApiBase}facilities/status`, {
         method: 'POST',
-        headers: { Authorization: idToken, 'Content-Type': 'application/json' },
+        headers: { Authorization: tok, 'Content-Type': 'application/json' },
         body: JSON.stringify({ featureId: facilityId, field, value: newValue }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -193,13 +198,12 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
       if (clearField) {
         const clearRes = await fetch(`${resolvedApiBase}facilities/status`, {
           method: 'POST',
-          headers: { Authorization: idToken, 'Content-Type': 'application/json' },
+          headers: { Authorization: tok, 'Content-Type': 'application/json' },
           body: JSON.stringify({ featureId: facilityId, field: clearField, value: false }),
         });
         if (!clearRes.ok) throw new Error(`HTTP ${clearRes.status}`);
       }
 
-      // Auto-clear keep-open only when the last active toggle is being turned off
       const otherField: EditStatusField =
         field === 'Warming_Active' ? 'Cooling_Active' : 'Warming_Active';
       const facilityState = facilities.find((f) => f.ObjectID === facilityId);
@@ -208,7 +212,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
       if (keepOpenIds.has(facilityId) && willBeInactive) {
         void fetch(`${resolvedApiBase}facilities/keep-open`, {
           method: 'PATCH',
-          headers: { Authorization: idToken, 'Content-Type': 'application/json' },
+          headers: { Authorization: tok, 'Content-Type': 'application/json' },
           body: JSON.stringify({ facilityId, keepOpen: false }),
         }).then(() => {
           setKeepOpenIds((prev) => {
@@ -246,20 +250,16 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
     async (facility: AdminFacility) => {
       const facilityId = facility.ObjectID;
       const nextValue = !keepOpenIds.has(facilityId);
-
       setKeepOpenPendingIds((prev) => new Set(prev).add(facilityId));
-
       try {
         const session = await fetchAuthSession();
-        const idToken = session.tokens?.idToken?.toString() ?? '';
-
+        const tok = session.tokens?.idToken?.toString() ?? '';
         const res = await fetch(`${resolvedApiBase}facilities/keep-open`, {
           method: 'PATCH',
-          headers: { Authorization: idToken, 'Content-Type': 'application/json' },
+          headers: { Authorization: tok, 'Content-Type': 'application/json' },
           body: JSON.stringify({ facilityId, keepOpen: nextValue }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
         setKeepOpenIds((prev) => {
           const next = new Set(prev);
           if (nextValue) next.add(facilityId);
@@ -280,6 +280,111 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
     [keepOpenIds, t],
   );
 
+  const handleEditOpen = useCallback(async (facilityId: number) => {
+    if (expandedId === facilityId) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(facilityId);
+    setExpandedRawAttrs(null);
+    setEditValues({});
+    setExpandError(null);
+    setSaveAttrsError(null);
+    setIsExpandLoading(true);
+
+    try {
+      const [schema, queryRes] = await Promise.all([
+        getFieldSchema(),
+        fetch(`${FEATURE_LAYER_URL}/query?${new URLSearchParams({
+          where: `OBJECTID=${facilityId}`,
+          outFields: '*',
+          returnGeometry: 'false',
+          f: 'json',
+        })}`),
+      ]);
+
+      const queryData = (await queryRes.json()) as {
+        features?: Array<{ attributes: RawAttrs }>;
+        error?: { message: string };
+      };
+      if (queryData.error) throw new Error(queryData.error.message);
+
+      const rawAttrs = queryData.features?.[0]?.attributes ?? {};
+      setExpandedRawAttrs(rawAttrs);
+      setExpandedFields(schema);
+
+      const initial: Record<string, string> = {};
+      for (const f of schema) {
+        const v = rawAttrs[f.name];
+        initial[f.name] = v == null ? '' : String(v);
+      }
+      setEditValues(initial);
+
+      // Focus first field after render
+      requestAnimationFrame(() => firstEditFieldRef.current?.focus());
+    } catch (err) {
+      console.error('edit expand error:', err);
+      setExpandError(t('admin.editFacility.loadError'));
+    } finally {
+      setIsExpandLoading(false);
+    }
+  }, [expandedId, t]);
+
+  const handleSaveAttrs = useCallback(async (facilityId: number) => {
+    setIsSavingAttrs(true);
+    setSaveAttrsError(null);
+
+    const attributes: RawAttrs = {};
+    for (const f of expandedFields) {
+      const raw = editValues[f.name] ?? '';
+      if (raw === '') {
+        attributes[f.name] = null;
+      } else if (
+        f.type === 'esriFieldTypeInteger' ||
+        f.type === 'esriFieldTypeSmallInteger' ||
+        f.type === 'esriFieldTypeDouble' ||
+        f.type === 'esriFieldTypeSingle'
+      ) {
+        attributes[f.name] = Number(raw);
+      } else {
+        attributes[f.name] = raw;
+      }
+    }
+
+    try {
+      const session = await fetchAuthSession();
+      const tok = session.tokens?.idToken?.toString() ?? '';
+      const res = await fetch(`${resolvedApiBase}facility/update-attributes`, {
+        method: 'POST',
+        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ objectId: facilityId, attributes }),
+      });
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string };
+        throw new Error(err.error ?? `HTTP ${res.status}`);
+      }
+
+      // Update the displayed Name if it changed
+      const newName = editValues['Name'];
+      if (newName) {
+        setFacilities((prev) =>
+          prev.map((f) => f.ObjectID === facilityId ? { ...f, Name: newName, EditDate: Date.now() } : f),
+        );
+      }
+
+      setExpandedId(null);
+      setExpandedRawAttrs(null);
+      setEditValues({});
+      setAnnouncement(t('admin.editFacility.saveSuccess'));
+    } catch (err) {
+      console.error('saveAttrs error:', err);
+      setSaveAttrsError(t('admin.editFacility.saveError'));
+      setAnnouncement(t('admin.editFacility.saveError'));
+    } finally {
+      setIsSavingAttrs(false);
+    }
+  }, [expandedFields, editValues, t]);
+
   const conflictType = pendingToggle?.clearField === 'Warming_Active'
     ? t('admin.panel.warming')
     : t('admin.panel.cooling');
@@ -290,26 +395,19 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
   const confirmMessage = pendingToggle
     ? t('admin.panel.confirmMessage', {
         name: pendingToggle.facilityName,
-        status: pendingToggle.newValue
-          ? t('admin.panel.open')
-          : t('admin.panel.closed'),
-        type: pendingToggle.field === 'Warming_Active'
-          ? t('admin.panel.warming')
-          : t('admin.panel.cooling'),
+        status: pendingToggle.newValue ? t('admin.panel.open') : t('admin.panel.closed'),
+        type: pendingToggle.field === 'Warming_Active' ? t('admin.panel.warming') : t('admin.panel.cooling'),
       })
     : '';
 
   const conflictWarning =
     pendingToggle?.clearField && pendingToggle.newValue
-      ? t('admin.panel.conflictWarning', {
-          newType,
-          clearType: conflictType,
-        })
+      ? t('admin.panel.conflictWarning', { newType, clearType: conflictType })
       : '';
 
   return (
     <div className={styles.panel}>
-      {/* ARIA live region for status announcements */}
+      {/* ARIA live region */}
       <div
         ref={announcerRef}
         role="status"
@@ -343,9 +441,20 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
       </div>
 
       <section aria-labelledby="facilities-heading">
-        <h2 id="facilities-heading" className={styles.sectionHeading}>
-          {t('admin.panel.facilities')}
-        </h2>
+        <div className={styles.sectionHeadingRow}>
+          <h2 id="facilities-heading" className={styles.sectionHeading}>
+            {t('admin.panel.facilities')}
+          </h2>
+          <button
+            ref={addNewBtnRef}
+            type="button"
+            className={styles.addNewBtn}
+            onClick={() => setAddModalOpen(true)}
+            aria-label={t('admin.addFacility.buttonAriaLabel')}
+          >
+            {t('admin.addFacility.buttonLabel')}
+          </button>
+        </div>
 
         {isLoading && (
           <div className={styles.loadingState} role="status" aria-live="polite">
@@ -355,9 +464,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
         )}
 
         {loadError && !isLoading && (
-          <p className={styles.errorMsg} role="alert">
-            {loadError}
-          </p>
+          <p className={styles.errorMsg} role="alert">{loadError}</p>
         )}
 
         {!isLoading && !loadError && facilities.length === 0 && (
@@ -373,6 +480,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
               const isCoolingActive = facility.Cooling_Active === 'Yes';
               const isKeptOpen = keepOpenIds.has(facility.ObjectID);
               const isKeepOpenPending = keepOpenPendingIds.has(facility.ObjectID);
+              const isExpanded = expandedId === facility.ObjectID;
               const editTs = facility.EditDate;
 
               return (
@@ -380,60 +488,131 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
                   key={facility.ObjectID}
                   className={`${styles.facilityCard} ${isKeptOpen ? styles.facilityCardKeptOpen : ''}`}
                 >
-                  <div className={styles.facilityInfo}>
-                    <h3 className={styles.facilityName}>{facility.Name}</h3>
-                    <p className={styles.facilityAddress}>{facility.Address}</p>
-                    {editTs && (
-                      <p className={styles.lastUpdated}>
-                        {t('admin.panel.lastUpdated')}: {formatDate(editTs)}
-                      </p>
-                    )}
-                    {isKeptOpen && (
-                      <p className={styles.keepOpenBadge}>
-                        {t('admin.panel.keepOpenActive')}
-                      </p>
-                    )}
+                  <div className={styles.facilityCardTop}>
+                    <div className={styles.facilityInfo}>
+                      <div className={styles.facilityNameRow}>
+                        <h3 className={styles.facilityName}>{facility.Name}</h3>
+                        <button
+                          type="button"
+                          className={styles.editLink}
+                          aria-expanded={isExpanded}
+                          aria-controls={`edit-form-${facility.ObjectID}`}
+                          onClick={() => void handleEditOpen(facility.ObjectID)}
+                        >
+                          {isExpanded ? t('admin.editFacility.cancelLink') : t('admin.editFacility.editLink')}
+                        </button>
+                      </div>
+                      <p className={styles.facilityAddress}>{facility.Address}</p>
+                      {editTs && (
+                        <p className={styles.lastUpdated}>
+                          {t('admin.panel.lastUpdated')}: {formatDate(editTs)}
+                        </p>
+                      )}
+                      {isKeptOpen && (
+                        <p className={styles.keepOpenBadge}>
+                          {t('admin.panel.keepOpenActive')}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className={styles.cardControls}>
+                      <div className={styles.toggleRow}>
+                        <ToggleSwitch
+                          label={t('admin.panel.warmingActive')}
+                          facilityName={facility.Name}
+                          isActive={isWarmingActive}
+                          isPending={updatingKeys.has(warmingKey)}
+                          onToggle={() => initiateToggle(facility, 'Warming_Active')}
+                        />
+                        <ToggleSwitch
+                          label={t('admin.panel.coolingActive')}
+                          facilityName={facility.Name}
+                          isActive={isCoolingActive}
+                          isPending={updatingKeys.has(coolingKey)}
+                          onToggle={() => initiateToggle(facility, 'Cooling_Active')}
+                        />
+                      </div>
+
+                      <div className={styles.keepOpenRow}>
+                        <label className={styles.keepOpenLabel}>
+                          <input
+                            type="checkbox"
+                            className={styles.keepOpenCheckbox}
+                            checked={isKeptOpen}
+                            disabled={isKeepOpenPending || (!isWarmingActive && !isCoolingActive)}
+                            onChange={() => void handleKeepOpenToggle(facility)}
+                            aria-label={t('admin.panel.keepOpenAria', { name: facility.Name })}
+                          />
+                          {t('admin.panel.keepOpen')}
+                        </label>
+                        <button
+                          type="button"
+                          className={styles.tooltipBtn}
+                          aria-label={t('admin.panel.keepOpenTooltip')}
+                          title={t('admin.panel.keepOpenTooltip')}
+                        >
+                          <span aria-hidden="true">ⓘ</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className={styles.cardControls}>
-                    <div className={styles.toggleRow}>
-                      <ToggleSwitch
-                        label={t('admin.panel.warmingActive')}
-                        facilityName={facility.Name}
-                        isActive={isWarmingActive}
-                        isPending={updatingKeys.has(warmingKey)}
-                        onToggle={() => initiateToggle(facility, 'Warming_Active')}
-                      />
-                      <ToggleSwitch
-                        label={t('admin.panel.coolingActive')}
-                        facilityName={facility.Name}
-                        isActive={isCoolingActive}
-                        isPending={updatingKeys.has(coolingKey)}
-                        onToggle={() => initiateToggle(facility, 'Cooling_Active')}
-                      />
-                    </div>
-
-                    <div className={styles.keepOpenRow}>
-                      <label className={styles.keepOpenLabel}>
-                        <input
-                          type="checkbox"
-                          className={styles.keepOpenCheckbox}
-                          checked={isKeptOpen}
-                          disabled={isKeepOpenPending || (!isWarmingActive && !isCoolingActive)}
-                          onChange={() => void handleKeepOpenToggle(facility)}
-                          aria-label={t('admin.panel.keepOpenAria', { name: facility.Name })}
-                        />
-                        {t('admin.panel.keepOpen')}
-                      </label>
-                      <button
-                        type="button"
-                        className={styles.tooltipBtn}
-                        aria-label={t('admin.panel.keepOpenTooltip')}
-                        title={t('admin.panel.keepOpenTooltip')}
-                      >
-                        <span aria-hidden="true">ⓘ</span>
-                      </button>
-                    </div>
+                  {/* Inline edit form */}
+                  <div
+                    id={`edit-form-${facility.ObjectID}`}
+                    className={`${styles.editFormWrapper} ${isExpanded ? styles.editFormWrapperExpanded : ''}`}
+                    aria-hidden={!isExpanded}
+                  >
+                    {isExpanded && (
+                      <div className={styles.editForm}>
+                        {isExpandLoading && (
+                          <div className={styles.editFormSkeleton} role="status" aria-live="polite">
+                            <span className={styles.spinner} aria-hidden="true" />
+                            {t('admin.editFacility.loading')}
+                          </div>
+                        )}
+                        {expandError && (
+                          <p className={styles.errorMsg} role="alert">{expandError}</p>
+                        )}
+                        {!isExpandLoading && !expandError && expandedRawAttrs && (
+                          <>
+                            <div className={styles.editFieldList}>
+                              {expandedFields.map((f, idx) => (
+                                <InlineFieldInput
+                                  key={f.name}
+                                  field={f}
+                                  value={editValues[f.name] ?? ''}
+                                  onChange={(name, val) => setEditValues((prev) => ({ ...prev, [name]: val }))}
+                                  inputRef={idx === 0 ? (el) => { firstEditFieldRef.current = el; } : undefined}
+                                />
+                              ))}
+                            </div>
+                            {saveAttrsError && (
+                              <p className={styles.errorMsg} role="alert" aria-live="assertive">
+                                {saveAttrsError}
+                              </p>
+                            )}
+                            <div className={styles.editFormActions}>
+                              <button
+                                type="button"
+                                className={styles.btnPrimary}
+                                disabled={isSavingAttrs}
+                                onClick={() => void handleSaveAttrs(facility.ObjectID)}
+                              >
+                                {isSavingAttrs ? (
+                                  <>
+                                    <span className={styles.spinner} aria-hidden="true" />
+                                    {t('admin.editFacility.saving')}
+                                  </>
+                                ) : (
+                                  t('admin.editFacility.save')
+                                )}
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </li>
               );
@@ -442,7 +621,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
         )}
       </section>
 
-      {/* Confirmation dialog — native <dialog> for built-in focus trapping */}
+      {/* Confirmation dialog */}
       <dialog
         ref={dialogRef}
         className={styles.dialog}
@@ -474,6 +653,18 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
           </button>
         </div>
       </dialog>
+
+      <AddFacilityModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onFacilityAdded={(newFacility) => {
+          setFacilities((prev) => [...prev, newFacility]);
+          setAnnouncement(t('admin.addFacility.saveSuccess'));
+        }}
+        apiBase={resolvedApiBase}
+        idToken={idToken}
+        triggerRef={addNewBtnRef}
+      />
     </div>
   );
 }
@@ -486,13 +677,7 @@ interface ToggleSwitchProps {
   onToggle: () => void;
 }
 
-function ToggleSwitch({
-  label,
-  facilityName,
-  isActive,
-  isPending,
-  onToggle,
-}: ToggleSwitchProps) {
+function ToggleSwitch({ label, facilityName, isActive, isPending, onToggle }: ToggleSwitchProps) {
   const { t } = useTranslation();
   return (
     <div className={styles.toggle}>
@@ -515,6 +700,71 @@ function ToggleSwitch({
           {isActive ? t('status.open') : t('status.closed')}
         </span>
       </button>
+    </div>
+  );
+}
+
+interface InlineFieldInputProps {
+  field: FieldDef;
+  value: string;
+  onChange: (name: string, value: string) => void;
+  inputRef?: (el: HTMLInputElement | HTMLSelectElement | null) => void;
+}
+
+function InlineFieldInput({ field, value, onChange, inputRef }: InlineFieldInputProps) {
+  const id = `inline-${field.name}`;
+  const required = field.nullable === false;
+
+  if (field.domain?.type === 'codedValue' && field.domain.codedValues?.length) {
+    return (
+      <div className={styles.inlineFormGroup}>
+        <label htmlFor={id} className={styles.inlineFieldLabel}>
+          {field.alias}
+          {required && <span aria-hidden="true"> *</span>}
+        </label>
+        <select
+          id={id}
+          className={styles.inlineFieldInput}
+          value={value}
+          required={required}
+          ref={inputRef as React.RefCallback<HTMLSelectElement>}
+          onChange={(e) => onChange(field.name, e.target.value)}
+        >
+          <option value="" />
+          {field.domain.codedValues.map((cv) => (
+            <option key={String(cv.code)} value={String(cv.code)}>{cv.name}</option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+
+  let type = 'text';
+  let step: string | undefined;
+  if (field.type === 'esriFieldTypeInteger' || field.type === 'esriFieldTypeSmallInteger') {
+    type = 'number'; step = '1';
+  } else if (field.type === 'esriFieldTypeDouble' || field.type === 'esriFieldTypeSingle') {
+    type = 'number'; step = 'any';
+  } else if (field.type === 'esriFieldTypeDate') {
+    type = 'date';
+  }
+
+  return (
+    <div className={styles.inlineFormGroup}>
+      <label htmlFor={id} className={styles.inlineFieldLabel}>
+        {field.alias}
+        {required && <span aria-hidden="true"> *</span>}
+      </label>
+      <input
+        id={id}
+        type={type}
+        step={step}
+        className={styles.inlineFieldInput}
+        value={value}
+        required={required}
+        ref={inputRef as React.RefCallback<HTMLInputElement>}
+        onChange={(e) => onChange(field.name, e.target.value)}
+      />
     </div>
   );
 }

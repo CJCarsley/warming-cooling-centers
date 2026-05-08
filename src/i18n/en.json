@@ -153,6 +153,37 @@
       "statusForceChange": "Password Reset Required",
       "statusUnknown": "Unknown"
     },
+    "addFacility": {
+      "buttonLabel": "+ Add New",
+      "buttonAriaLabel": "Add a new facility",
+      "modalTitle": "Add New Facility",
+      "step1Title": "Choose Location",
+      "step2Title": "Facility Details",
+      "dropPinInstruction": "Click anywhere on the map to place a pin. You can also search for an address above.",
+      "coordsLabel": "Lat: {{lat}}, Lon: {{lon}}",
+      "confirmLocation": "Confirm Location",
+      "backToMap": "← Back to Map",
+      "save": "Save Facility",
+      "saving": "Saving…",
+      "discard": "Discard & Cancel",
+      "cancel": "Cancel",
+      "schemaLoadError": "Failed to load form fields. Please try again.",
+      "reverseGeocodeError": "Could not auto-fill address from the selected location.",
+      "saveSuccess": "New facility added successfully.",
+      "saveError": "Failed to add facility. Please try again.",
+      "mapAriaLabel": "Facility location map",
+      "pinPlaced": "Pin placed at Lat: {{lat}}, Lon: {{lon}}"
+    },
+    "editFacility": {
+      "editLink": "Edit",
+      "cancelLink": "Cancel",
+      "save": "Save Changes",
+      "saving": "Saving…",
+      "saveSuccess": "Facility updated successfully.",
+      "saveError": "Failed to update facility. Please try again.",
+      "loading": "Loading facility data…",
+      "loadError": "Failed to load facility data. Please try again."
+    },
     "modal": {
       "title": "Manage Facilities — {{email}}",
       "close": "Close",
