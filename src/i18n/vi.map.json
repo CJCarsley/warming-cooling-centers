@@ -14,7 +14,8 @@
     "warming": "Trung Tâm Sưởi Ấm",
     "cooling": "Trung Tâm Làm Mát",
     "dual": "Trung Tâm Sưởi Ấm và Làm Mát",
-    "inactive": "Đóng Cửa / Không Hoạt Động"
+    "inactive": "Đóng Cửa / Không Hoạt Động",
+    "toggleAria": "Bật/tắt chú giải bản đồ"
   },
   "facilityType": {
     "warming": "Trung Tâm Sưởi Ấm",

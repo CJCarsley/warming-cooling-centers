@@ -14,7 +14,8 @@
     "warming": "Warming Center",
     "cooling": "Cooling Center",
     "dual": "Warming & Cooling Center",
-    "inactive": "Closed / Inactive"
+    "inactive": "Closed / Inactive",
+    "toggleAria": "Toggle map legend"
   },
   "facilityType": {
     "warming": "Warming Center",

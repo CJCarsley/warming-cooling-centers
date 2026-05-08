@@ -72,7 +72,8 @@
     "close": "إغلاق لوحة المراكز القريبة",
     "distanceAria": "على بُعد {{dist}}",
     "resultsAnnouncement_one": "عرض مركز قريب واحد",
-    "resultsAnnouncement_other": "عرض {{count}} مراكز قريبة"
+    "resultsAnnouncement_other": "عرض {{count}} مراكز قريبة",
+    "noActiveFacilities": "لا توجد مراكز تدفئة أو تبريد مفتوحة حالياً."
   },
   "directions": {
     "google": "Google Maps",

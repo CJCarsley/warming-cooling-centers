@@ -16,6 +16,7 @@ import { useFeatureLayer } from '../../hooks/useFeatureLayer';
 import { useNearby } from '../../hooks/useNearby';
 import FacilityPopup from './FacilityPopup';
 import MapLegend from './MapLegend';
+import MobileLegendOverlay from './MobileLegendOverlay';
 import NearbyPanel from './NearbyPanel';
 import type { FacilityAttributes } from '../../types/facility';
 import { getFacilityType } from '../../types/facility';
@@ -66,14 +67,17 @@ export default function MapViewComponent() {
     [tMap],
   );
 
-  // Announce nearby result count whenever it changes
+  // Announce nearby result count (or empty state) whenever results change
   useEffect(() => {
-    if (nearbyResults.length > 0) {
-      setNearbyAnnouncement(t('nearby.resultsAnnouncement', { count: nearbyResults.length }));
-    } else {
+    if (!nearbyPoint) {
       setNearbyAnnouncement('');
+    } else if (nearbyResults.length > 0) {
+      setNearbyAnnouncement(t('nearby.resultsAnnouncement', { count: nearbyResults.length }));
+    } else if (facilitiesWithLocation.length > 0) {
+      // Facilities loaded but none are active
+      setNearbyAnnouncement(t('nearby.noActiveFacilities'));
     }
-  }, [nearbyResults.length, t]);
+  }, [nearbyPoint, nearbyResults.length, facilitiesWithLocation.length, t]);
 
   useEffect(() => {
     if (!view) return;
@@ -227,7 +231,8 @@ export default function MapViewComponent() {
           tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
         />
         <MapLegend />
-        {nearbyResults.length > 0 && (
+        <MobileLegendOverlay />
+        {nearbyPoint !== null && facilitiesWithLocation.length > 0 && (
           <NearbyPanel
             results={nearbyResults}
             originPoint={nearbyPoint}

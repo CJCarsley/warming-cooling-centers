@@ -26,6 +26,10 @@ export function useNearby(
   return useMemo(() => {
     if (!point || !facilities.length) return [];
     return facilities
+      .filter(
+        (f) =>
+          f.attributes.Warming_Active === 'Yes' || f.attributes.Cooling_Active === 'Yes',
+      )
       .map((f) => ({
         facility: f,
         distanceMi:
