@@ -906,6 +906,14 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
         onFacilityAdded={(newFacility) => {
           setFacilities((prev) => [...prev, newFacility]);
           setAnnouncement(t('admin.addFacility.saveSuccess'));
+          // The addFacility Lambda updated custom:facility_ids in Cognito, but the
+          // cached JWT still has the old claim. Force a refresh so any immediate
+          // action on the new facility (edit attributes, set notifications, delete)
+          // uses a token that includes the new facility ID.
+          void fetchAuthSession({ forceRefresh: true }).then((session) => {
+            const tok = session.tokens?.idToken?.toString() ?? '';
+            if (tok) setIdToken(tok);
+          });
         }}
         apiBase={resolvedApiBase}
         idToken={idToken}
