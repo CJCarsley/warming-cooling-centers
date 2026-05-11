@@ -126,6 +126,19 @@
       "keepOpenAria": "إبقاء {{name}} مفتوحاً طوال الليل",
       "keepOpenActive": "استثناء إعادة الضبط الليلية نشط",
       "conflictWarning": "ملاحظة: تفعيل {{newType}} سيؤدي تلقائياً إلى إلغاء تفعيل {{clearType}}."
+    },
+    "notifications": {
+      "link": "Set Notifications",
+      "cancelLink": "Cancel Notifications",
+      "label": "Notification emails (comma-separated)",
+      "placeholder": "email1@example.com, email2@example.com",
+      "hint": "These addresses receive an email whenever this facility is activated for warming or cooling. Leave blank to use the system default.",
+      "save": "Save Notifications",
+      "saving": "Saving…",
+      "saveSuccess": "Notification emails updated.",
+      "saveError": "Failed to save notification emails. Please try again.",
+      "loading": "Loading notification settings…",
+      "loadError": "Failed to load notification settings. Please try again."
     }
   }
 }

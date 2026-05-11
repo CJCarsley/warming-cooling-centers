@@ -85,6 +85,29 @@ main {
   flex-direction: column;
 }
 
+/* On mobile, lock the viewport so the map can never scroll behind the header
+   or footer. The header/footer remain at fixed positions; main becomes the
+   sole scroll container (for admin pages). */
+@media (max-width: 767px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  main {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+  }
+}
+
 /* ─── Utility ─── */
 .sr-only {
   position: absolute;

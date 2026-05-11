@@ -65,6 +65,17 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
   const [announcement, setAnnouncement] = useState('');
   const [addModalOpen, setAddModalOpen] = useState(false);
 
+  // Notifications-in-place state
+  const [notifExpandedId, setNotifExpandedId] = useState<number | null>(null);
+  const [notifEmails, setNotifEmails] = useState('');
+  const [isNotifLoading, setIsNotifLoading] = useState(false);
+  const [isNotifSaving, setIsNotifSaving] = useState(false);
+  const [notifLoadError, setNotifLoadError] = useState<string | null>(null);
+  const [notifSaveError, setNotifSaveError] = useState<string | null>(null);
+
+  // Tooltip open state
+  const [openTooltipId, setOpenTooltipId] = useState<number | null>(null);
+
   // Edit-in-place state
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [expandedRawAttrs, setExpandedRawAttrs] = useState<RawAttrs | null>(null);
@@ -285,6 +296,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
       setExpandedId(null);
       return;
     }
+    if (notifExpandedId === facilityId) setNotifExpandedId(null);
     setExpandedId(facilityId);
     setExpandedRawAttrs(null);
     setEditValues({});
@@ -328,7 +340,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
     } finally {
       setIsExpandLoading(false);
     }
-  }, [expandedId, t]);
+  }, [expandedId, notifExpandedId, t]);
 
   const handleSaveAttrs = useCallback(async (facilityId: number) => {
     setIsSavingAttrs(true);
@@ -384,6 +396,60 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
       setIsSavingAttrs(false);
     }
   }, [expandedFields, editValues, t]);
+
+  const handleNotifOpen = useCallback(async (facilityId: number) => {
+    if (notifExpandedId === facilityId) {
+      setNotifExpandedId(null);
+      return;
+    }
+    if (expandedId === facilityId) setExpandedId(null);
+    setNotifExpandedId(facilityId);
+    setNotifEmails('');
+    setNotifLoadError(null);
+    setNotifSaveError(null);
+    setIsNotifLoading(true);
+    try {
+      const session = await fetchAuthSession();
+      const tok = session.tokens?.idToken?.toString() ?? '';
+      const res = await fetch(
+        `${resolvedApiBase}facilities/notifications?facilityId=${facilityId}`,
+        { headers: { Authorization: tok } },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { notificationEmails: string };
+      setNotifEmails(data.notificationEmails ?? '');
+    } catch (err) {
+      console.error('notif load error:', err);
+      setNotifLoadError(t('admin.notifications.loadError'));
+    } finally {
+      setIsNotifLoading(false);
+    }
+  }, [notifExpandedId, expandedId, t]);
+
+  const handleSaveNotifications = useCallback(async (facilityId: number) => {
+    setIsNotifSaving(true);
+    setNotifSaveError(null);
+    try {
+      const session = await fetchAuthSession();
+      const tok = session.tokens?.idToken?.toString() ?? '';
+      const res = await fetch(`${resolvedApiBase}facilities/notifications`, {
+        method: 'PATCH',
+        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ facilityId, notificationEmails: notifEmails }),
+      });
+      if (!res.ok) {
+        const errData = (await res.json()) as { error?: string };
+        throw new Error(errData.error ?? `HTTP ${res.status}`);
+      }
+      setNotifExpandedId(null);
+      setAnnouncement(t('admin.notifications.saveSuccess'));
+    } catch (err) {
+      console.error('notif save error:', err);
+      setNotifSaveError(t('admin.notifications.saveError'));
+    } finally {
+      setIsNotifSaving(false);
+    }
+  }, [notifEmails, t]);
 
   const conflictType = pendingToggle?.clearField === 'Warming_Active'
     ? t('admin.panel.warming')
@@ -481,6 +547,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
               const isKeptOpen = keepOpenIds.has(facility.ObjectID);
               const isKeepOpenPending = keepOpenPendingIds.has(facility.ObjectID);
               const isExpanded = expandedId === facility.ObjectID;
+              const isNotifExpanded = notifExpandedId === facility.ObjectID;
               const editTs = facility.EditDate;
 
               return (
@@ -500,6 +567,15 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
                           onClick={() => void handleEditOpen(facility.ObjectID)}
                         >
                           {isExpanded ? t('admin.editFacility.cancelLink') : t('admin.editFacility.editLink')}
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.editLink}
+                          aria-expanded={isNotifExpanded}
+                          aria-controls={`notif-form-${facility.ObjectID}`}
+                          onClick={() => void handleNotifOpen(facility.ObjectID)}
+                        >
+                          {isNotifExpanded ? t('admin.notifications.cancelLink') : t('admin.notifications.link')}
                         </button>
                       </div>
                       <p className={styles.facilityAddress}>{facility.Address}</p>
@@ -545,14 +621,26 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
                           />
                           {t('admin.panel.keepOpen')}
                         </label>
-                        <button
-                          type="button"
-                          className={styles.tooltipBtn}
-                          aria-label={t('admin.panel.keepOpenTooltip')}
-                          title={t('admin.panel.keepOpenTooltip')}
-                        >
-                          <span aria-hidden="true">ⓘ</span>
-                        </button>
+                        <div className={styles.tooltipWrapper}>
+                          <button
+                            type="button"
+                            className={styles.tooltipBtn}
+                            aria-label={t('admin.panel.keepOpenTooltip')}
+                            aria-expanded={openTooltipId === facility.ObjectID}
+                            onClick={() =>
+                              setOpenTooltipId(
+                                openTooltipId === facility.ObjectID ? null : facility.ObjectID,
+                              )
+                            }
+                          >
+                            <span aria-hidden="true">ⓘ</span>
+                          </button>
+                          {openTooltipId === facility.ObjectID && (
+                            <div className={styles.tooltip} role="tooltip">
+                              {t('admin.panel.keepOpenTooltip')}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -606,6 +694,70 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
                                   </>
                                 ) : (
                                   t('admin.editFacility.save')
+                                )}
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Notifications section */}
+                  <div
+                    id={`notif-form-${facility.ObjectID}`}
+                    className={`${styles.editFormWrapper} ${isNotifExpanded ? styles.editFormWrapperExpanded : ''}`}
+                    aria-hidden={!isNotifExpanded}
+                  >
+                    {isNotifExpanded && (
+                      <div className={styles.editForm}>
+                        {isNotifLoading && (
+                          <div className={styles.editFormSkeleton} role="status" aria-live="polite">
+                            <span className={styles.spinner} aria-hidden="true" />
+                            {t('admin.notifications.loading')}
+                          </div>
+                        )}
+                        {notifLoadError && (
+                          <p className={styles.errorMsg} role="alert">{notifLoadError}</p>
+                        )}
+                        {!isNotifLoading && !notifLoadError && (
+                          <>
+                            <div className={styles.inlineFormGroup}>
+                              <label
+                                htmlFor={`notif-emails-${facility.ObjectID}`}
+                                className={styles.inlineFieldLabel}
+                              >
+                                {t('admin.notifications.label')}
+                              </label>
+                              <textarea
+                                id={`notif-emails-${facility.ObjectID}`}
+                                className={styles.notifEmailsInput}
+                                value={notifEmails}
+                                placeholder={t('admin.notifications.placeholder')}
+                                rows={3}
+                                onChange={(e) => setNotifEmails(e.target.value)}
+                              />
+                              <p className={styles.notifHint}>{t('admin.notifications.hint')}</p>
+                            </div>
+                            {notifSaveError && (
+                              <p className={styles.errorMsg} role="alert" aria-live="assertive">
+                                {notifSaveError}
+                              </p>
+                            )}
+                            <div className={styles.editFormActions}>
+                              <button
+                                type="button"
+                                className={styles.btnPrimary}
+                                disabled={isNotifSaving}
+                                onClick={() => void handleSaveNotifications(facility.ObjectID)}
+                              >
+                                {isNotifSaving ? (
+                                  <>
+                                    <span className={styles.spinner} aria-hidden="true" />
+                                    {t('admin.notifications.saving')}
+                                  </>
+                                ) : (
+                                  t('admin.notifications.save')
                                 )}
                               </button>
                             </div>

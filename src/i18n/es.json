@@ -183,6 +183,19 @@
       "loading": "Cargando datos del centro…",
       "loadError": "Error al cargar los datos del centro. Por favor, inténtelo de nuevo."
     },
+    "notifications": {
+      "link": "Set Notifications",
+      "cancelLink": "Cancel Notifications",
+      "label": "Notification emails (comma-separated)",
+      "placeholder": "email1@example.com, email2@example.com",
+      "hint": "These addresses receive an email whenever this facility is activated for warming or cooling. Leave blank to use the system default.",
+      "save": "Save Notifications",
+      "saving": "Saving…",
+      "saveSuccess": "Notification emails updated.",
+      "saveError": "Failed to save notification emails. Please try again.",
+      "loading": "Loading notification settings…",
+      "loadError": "Failed to load notification settings. Please try again."
+    },
     "modal": {
       "title": "Gestionar Centros — {{email}}",
       "close": "Cerrar",

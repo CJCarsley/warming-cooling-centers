@@ -84,7 +84,7 @@ export const handler = async (): Promise<void> => {
           ConsistentRead: true,
         }),
       );
-      if (!result.Item) {
+      if (!result.Item?.keepOpen) {
         toReset.push(id);
       } else {
         console.log(`Facility ${id} has keep-open override; skipping`);

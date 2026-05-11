@@ -11,9 +11,9 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Authorization,Content-Type',
 };
 
-interface UpdateKeepOpenBody {
+interface SetNotificationsBody {
   facilityId: number;
-  keepOpen: boolean;
+  emails: string;
 }
 
 export const handler = async (
@@ -36,9 +36,9 @@ export const handler = async (
     };
   }
 
-  let body: UpdateKeepOpenBody;
+  let body: SetNotificationsBody;
   try {
-    body = JSON.parse(event.body) as UpdateKeepOpenBody;
+    body = JSON.parse(event.body) as SetNotificationsBody;
   } catch {
     return {
       statusCode: 400,
@@ -47,9 +47,8 @@ export const handler = async (
     };
   }
 
-  const { facilityId, keepOpen } = body;
-
-  if (typeof facilityId !== 'number' || typeof keepOpen !== 'boolean') {
+  const { facilityId, emails } = body;
+  if (typeof facilityId !== 'number' || typeof emails !== 'string') {
     return {
       statusCode: 400,
       headers: CORS_HEADERS,
@@ -65,14 +64,16 @@ export const handler = async (
     };
   }
 
+  const trimmedEmails = emails.trim();
+
   try {
-    if (keepOpen) {
+    if (trimmedEmails) {
       await ddb.send(
         new UpdateCommand({
           TableName: TABLE_NAME,
           Key: { facilityId: String(facilityId) },
-          UpdateExpression: 'SET keepOpen = :val',
-          ExpressionAttributeValues: { ':val': true },
+          UpdateExpression: 'SET notificationEmails = :emails',
+          ExpressionAttributeValues: { ':emails': trimmedEmails },
         }),
       );
     } else {
@@ -80,18 +81,17 @@ export const handler = async (
         new UpdateCommand({
           TableName: TABLE_NAME,
           Key: { facilityId: String(facilityId) },
-          UpdateExpression: 'REMOVE keepOpen',
+          UpdateExpression: 'REMOVE notificationEmails',
         }),
       );
     }
-
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
       body: JSON.stringify({ success: true }),
     };
   } catch (err) {
-    console.error('updateKeepOpen error:', err);
+    console.error('setFacilityNotifications error:', err);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,

@@ -23,6 +23,8 @@ import { updateKeepOpen } from './functions/updateKeepOpen/resource';
 import { autoResetFacilities } from './functions/autoResetFacilities/resource';
 import { addFacility } from './functions/addFacility/resource';
 import { updateFacilityAttributes } from './functions/updateFacilityAttributes/resource';
+import { getFacilityNotifications } from './functions/getFacilityNotifications/resource';
+import { setFacilityNotifications } from './functions/setFacilityNotifications/resource';
 
 const backend = defineBackend({
   auth,
@@ -34,6 +36,8 @@ const backend = defineBackend({
   autoResetFacilities,
   addFacility,
   updateFacilityAttributes,
+  getFacilityNotifications,
+  setFacilityNotifications,
 });
 
 // Password policy via CDK override (not exposed in defineAuth API)
@@ -65,6 +69,8 @@ const updateKeepOpenFn = backend.updateKeepOpen.resources.lambda as LambdaFuncti
 const autoResetFn = backend.autoResetFacilities.resources.lambda as LambdaFunction;
 const addFacilityFn = backend.addFacility.resources.lambda as LambdaFunction;
 const updateFacilityAttrsFn = backend.updateFacilityAttributes.resources.lambda as LambdaFunction;
+const getFacilityNotificationsFn = backend.getFacilityNotifications.resources.lambda as LambdaFunction;
+const setFacilityNotificationsFn = backend.setFacilityNotifications.resources.lambda as LambdaFunction;
 
 updateStatusFn.addToRolePolicy(
   new PolicyStatement({
@@ -115,8 +121,11 @@ const TABLE_LITERAL = 'FacilityOverrides';
 
 for (const [fn, actions] of [
   [getKeepOpenFn, ['dynamodb:BatchGetItem', 'dynamodb:GetItem']],
-  [updateKeepOpenFn, ['dynamodb:PutItem', 'dynamodb:DeleteItem']],
+  [updateKeepOpenFn, ['dynamodb:UpdateItem']],
   [autoResetFn, ['dynamodb:GetItem']],
+  [updateStatusFn, ['dynamodb:GetItem']],
+  [getFacilityNotificationsFn, ['dynamodb:GetItem']],
+  [setFacilityNotificationsFn, ['dynamodb:UpdateItem']],
 ] as [LambdaFunction, string[]][]) {
   fn.addToRolePolicy(
     new PolicyStatement({
@@ -179,6 +188,18 @@ keepOpenResource.addMethod(
 keepOpenResource.addMethod(
   'PATCH',
   new LambdaIntegration(backend.updateKeepOpen.resources.lambda),
+  { authorizer },
+);
+
+const notificationsResource = facilitiesResource.addResource('notifications');
+notificationsResource.addMethod(
+  'GET',
+  new LambdaIntegration(backend.getFacilityNotifications.resources.lambda),
+  { authorizer },
+);
+notificationsResource.addMethod(
+  'PATCH',
+  new LambdaIntegration(backend.setFacilityNotifications.resources.lambda),
   { authorizer },
 );
 
