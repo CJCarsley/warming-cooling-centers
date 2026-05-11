@@ -549,6 +549,9 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
               const isExpanded = expandedId === facility.ObjectID;
               const isNotifExpanded = notifExpandedId === facility.ObjectID;
               const editTs = facility.EditDate;
+              // Lock an active toggle when Keep Open is set and it's the only active toggle
+              const warmingLocked = isKeptOpen && isWarmingActive && !isCoolingActive;
+              const coolingLocked = isKeptOpen && isCoolingActive && !isWarmingActive;
 
               return (
                 <li
@@ -598,6 +601,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
                           facilityName={facility.Name}
                           isActive={isWarmingActive}
                           isPending={updatingKeys.has(warmingKey)}
+                          isLocked={warmingLocked}
                           onToggle={() => initiateToggle(facility, 'Warming_Active')}
                         />
                         <ToggleSwitch
@@ -605,6 +609,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
                           facilityName={facility.Name}
                           isActive={isCoolingActive}
                           isPending={updatingKeys.has(coolingKey)}
+                          isLocked={coolingLocked}
                           onToggle={() => initiateToggle(facility, 'Cooling_Active')}
                         />
                       </div>
@@ -826,10 +831,11 @@ interface ToggleSwitchProps {
   facilityName: string;
   isActive: boolean;
   isPending: boolean;
+  isLocked?: boolean;
   onToggle: () => void;
 }
 
-function ToggleSwitch({ label, facilityName, isActive, isPending, onToggle }: ToggleSwitchProps) {
+function ToggleSwitch({ label, facilityName, isActive, isPending, isLocked, onToggle }: ToggleSwitchProps) {
   const { t } = useTranslation();
   return (
     <div className={styles.toggle}>
@@ -839,7 +845,7 @@ function ToggleSwitch({ label, facilityName, isActive, isPending, onToggle }: To
         role="switch"
         aria-checked={isActive}
         aria-label={`${label} — ${facilityName}`}
-        disabled={isPending}
+        disabled={isPending || isLocked}
         onClick={onToggle}
         className={`${styles.toggleBtn} ${isActive ? styles.toggleBtnOn : ''}`}
       >

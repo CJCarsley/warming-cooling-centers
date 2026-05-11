@@ -12,7 +12,12 @@ export default function Footer() {
           <a href="/accessibility" className={styles.link}>
             {t('footer.accessibilityStatement')}
           </a>
-          <a href="/contact" className={styles.link}>
+          <a
+            href="https://contact.dogis.org/"
+            className={styles.link}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             {t('footer.contact')}
           </a>
         </div>
