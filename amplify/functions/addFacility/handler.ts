@@ -4,7 +4,12 @@ import {
   AdminGetUserCommand,
   AdminUpdateUserAttributesCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { getArcGISToken } from '../shared/arcgisToken';
+
+const TABLE_NAME = process.env.TABLE_NAME!;
+const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 const USER_POOL_ID = process.env.USER_POOL_ID!;
 const ARCGIS_FEATURE_LAYER_URL = process.env.ARCGIS_FEATURE_LAYER_URL!;
@@ -86,11 +91,27 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const idList = currentIds.split(',').map((s) => s.trim()).filter(Boolean);
     if (!idList.includes(String(newObjectId))) idList.push(String(newObjectId));
 
+    const creatorEmail = userRes.UserAttributes?.find((a) => a.Name === 'email')?.Value ?? '';
+
     await cognito.send(new AdminUpdateUserAttributesCommand({
       UserPoolId: USER_POOL_ID,
       Username: username,
       UserAttributes: [{ Name: 'custom:facility_ids', Value: idList.join(',') }],
     }));
+
+    // Seed the creator's email as the default notification recipient for this facility
+    if (creatorEmail) {
+      try {
+        await ddb.send(new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: { facilityId: String(newObjectId) },
+          UpdateExpression: 'SET notificationEmails = :emails',
+          ExpressionAttributeValues: { ':emails': creatorEmail },
+        }));
+      } catch (ddbErr) {
+        console.error('DynamoDB seed notification failed (non-fatal):', ddbErr);
+      }
+    }
 
     return {
       statusCode: 200,

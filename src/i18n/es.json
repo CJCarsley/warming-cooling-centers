@@ -173,6 +173,15 @@
       "mapAriaLabel": "Mapa de ubicación del centro",
       "pinPlaced": "Marcador colocado en Lat: {{lat}}, Lon: {{lon}}"
     },
+    "deleteFacility": {
+      "link": "Delete",
+      "confirmTitle": "Delete Facility",
+      "confirmMessage": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+      "confirmYes": "Yes, delete",
+      "deleting": "Deleting…",
+      "deleteSuccess": "Facility deleted successfully.",
+      "deleteError": "Failed to delete facility. Please try again."
+    },
     "editFacility": {
       "editLink": "Editar",
       "cancelLink": "Cancelar",

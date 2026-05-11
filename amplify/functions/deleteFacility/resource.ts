@@ -1,7 +1,7 @@
 import { defineFunction, secret } from '@aws-amplify/backend';
 
-export const addFacility = defineFunction({
-  name: 'addFacility',
+export const deleteFacility = defineFunction({
+  name: 'deleteFacility',
   entry: './handler.ts',
   environment: {
     ARCGIS_CLIENT_ID: secret('ARCGIS_CLIENT_ID'),

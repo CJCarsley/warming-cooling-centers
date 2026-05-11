@@ -25,6 +25,7 @@ import { addFacility } from './functions/addFacility/resource';
 import { updateFacilityAttributes } from './functions/updateFacilityAttributes/resource';
 import { getFacilityNotifications } from './functions/getFacilityNotifications/resource';
 import { setFacilityNotifications } from './functions/setFacilityNotifications/resource';
+import { deleteFacility } from './functions/deleteFacility/resource';
 
 const backend = defineBackend({
   auth,
@@ -38,6 +39,7 @@ const backend = defineBackend({
   updateFacilityAttributes,
   getFacilityNotifications,
   setFacilityNotifications,
+  deleteFacility,
 });
 
 // Password policy via CDK override (not exposed in defineAuth API)
@@ -71,6 +73,7 @@ const addFacilityFn = backend.addFacility.resources.lambda as LambdaFunction;
 const updateFacilityAttrsFn = backend.updateFacilityAttributes.resources.lambda as LambdaFunction;
 const getFacilityNotificationsFn = backend.getFacilityNotifications.resources.lambda as LambdaFunction;
 const setFacilityNotificationsFn = backend.setFacilityNotifications.resources.lambda as LambdaFunction;
+const deleteFacilityFn = backend.deleteFacility.resources.lambda as LambdaFunction;
 
 updateStatusFn.addToRolePolicy(
   new PolicyStatement({
@@ -83,6 +86,7 @@ updateStatusFn.addToRolePolicy(
 getUsersFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 updateFacilitiesFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 addFacilityFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
+deleteFacilityFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 
 getUsersFn.addToRolePolicy(
   new PolicyStatement({
@@ -114,6 +118,17 @@ addFacilityFn.addToRolePolicy(
   }),
 );
 
+deleteFacilityFn.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: [
+      'cognito-idp:AdminGetUser',
+      'cognito-idp:AdminUpdateUserAttributes',
+    ],
+    resources: [userPoolArn],
+  }),
+);
+
 // Grant DynamoDB access by constructing the ARN within each Lambda's own nested stack
 // (using pseudo-params only — no cross-stack CFN Export/Import). TABLE_NAME is already
 // hardcoded in each function's resource.ts so nothing flows from this stack to theirs.
@@ -126,6 +141,8 @@ for (const [fn, actions] of [
   [updateStatusFn, ['dynamodb:GetItem']],
   [getFacilityNotificationsFn, ['dynamodb:GetItem']],
   [setFacilityNotificationsFn, ['dynamodb:UpdateItem']],
+  [addFacilityFn, ['dynamodb:UpdateItem']],
+  [deleteFacilityFn, ['dynamodb:DeleteItem']],
 ] as [LambdaFunction, string[]][]) {
   fn.addToRolePolicy(
     new PolicyStatement({
@@ -214,6 +231,10 @@ facilityResource
 facilityResource
   .addResource('update-attributes')
   .addMethod('POST', new LambdaIntegration(backend.updateFacilityAttributes.resources.lambda), { authorizer });
+
+facilityResource
+  .addResource('delete')
+  .addMethod('POST', new LambdaIntegration(backend.deleteFacility.resources.lambda), { authorizer });
 
 // GET /admin/users — list all users + live facility data
 // PATCH /admin/users/facilities — add/remove a facility assignment
