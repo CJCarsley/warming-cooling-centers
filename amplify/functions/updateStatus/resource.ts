@@ -4,6 +4,7 @@ export const updateStatus = defineFunction({
   name: 'updateStatus',
   entry: './handler.ts',
   environment: {
+    TABLE_NAME: 'FacilityOverrides',
     ARCGIS_CLIENT_ID: secret('ARCGIS_CLIENT_ID'),
     ARCGIS_CLIENT_SECRET: secret('ARCGIS_CLIENT_SECRET'),
     ARCGIS_FEATURE_LAYER_URL:

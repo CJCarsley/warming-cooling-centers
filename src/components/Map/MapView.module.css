@@ -38,12 +38,13 @@
 
 @media (max-width: 768px) {
   .mapContainer {
-    flex: none;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   .mapView {
-    height: 60vh;
-    min-height: 60vh;
-    flex: none;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
   }
 }

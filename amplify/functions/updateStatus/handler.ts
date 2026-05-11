@@ -1,5 +1,10 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+
+const TABLE_NAME = process.env.TABLE_NAME!;
+const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 const ARCGIS_CLIENT_ID = process.env.ARCGIS_CLIENT_ID!;
 const ARCGIS_CLIENT_SECRET = process.env.ARCGIS_CLIENT_SECRET!;
@@ -61,8 +66,8 @@ async function getFacilityName(token: string, objectId: number): Promise<string>
 async function sendActivationEmail(
   facilityName: string,
   field: 'Warming_Active' | 'Cooling_Active',
+  toAddresses: string[],
 ): Promise<void> {
-  const toAddresses = NOTIFICATION_EMAILS.split(',').map((e) => e.trim()).filter(Boolean);
   if (!toAddresses.length || !SES_FROM_EMAIL) return;
 
   const type = field === 'Warming_Active' ? 'warming' : 'cooling';
@@ -203,8 +208,24 @@ export const handler = async (
 
     if (value) {
       try {
+        let toAddresses: string[];
+        try {
+          const override = await ddb.send(
+            new GetCommand({
+              TableName: TABLE_NAME,
+              Key: { facilityId: String(featureId) },
+              ConsistentRead: true,
+            }),
+          );
+          const perFacilityEmails = override.Item?.notificationEmails as string | undefined;
+          toAddresses = perFacilityEmails
+            ? perFacilityEmails.split(',').map((e: string) => e.trim()).filter(Boolean)
+            : NOTIFICATION_EMAILS.split(',').map((e) => e.trim()).filter(Boolean);
+        } catch {
+          toAddresses = NOTIFICATION_EMAILS.split(',').map((e) => e.trim()).filter(Boolean);
+        }
         const facilityName = await getFacilityName(token, featureId);
-        await sendActivationEmail(facilityName, field);
+        await sendActivationEmail(facilityName, field, toAddresses);
       } catch (emailErr) {
         console.error('Email notification failed (non-fatal):', emailErr);
       }
