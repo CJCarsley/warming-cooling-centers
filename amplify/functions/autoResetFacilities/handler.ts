@@ -76,14 +76,21 @@ export const handler = async (): Promise<void> => {
   const toReset: number[] = [];
   for (const feature of activeFacilities) {
     const id = feature.attributes.ObjectID;
-    const result = await ddb.send(
-      new GetCommand({
-        TableName: TABLE_NAME,
-        Key: { facilityId: String(id) },
-      }),
-    );
-    if (!result.Item) {
-      toReset.push(id);
+    try {
+      const result = await ddb.send(
+        new GetCommand({
+          TableName: TABLE_NAME,
+          Key: { facilityId: String(id) },
+          ConsistentRead: true,
+        }),
+      );
+      if (!result.Item) {
+        toReset.push(id);
+      } else {
+        console.log(`Facility ${id} has keep-open override; skipping`);
+      }
+    } catch (err) {
+      console.error(`DynamoDB GetItem failed for facility ${id}; skipping reset (fail-safe):`, err);
     }
   }
 
