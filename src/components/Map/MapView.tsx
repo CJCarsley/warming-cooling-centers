@@ -173,6 +173,12 @@ export default function MapViewComponent() {
     view.ui.add(locate, 'top-right');
     view.ui.add(basemapExpand, 'top-right');
 
+    // Auto-collapse the basemap panel when a new basemap is selected.
+    // The watch fires only on *changes*, so clicking the current basemap is a no-op.
+    const basemapHandle = basemapGallery.watch('activeBasemap', () => {
+      basemapExpand.collapse();
+    });
+
     // ArcGIS TS typings don't expose 'select-result' in on() overloads; cast to any.
     // Use .latitude/.longitude (not .x/.y) — ArcGIS auto-converts to WGS84 regardless of source SR.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -191,6 +197,7 @@ export default function MapViewComponent() {
     });
 
     return () => {
+      basemapHandle.remove();
       searchHandle.remove();
       locateHandle.remove();
       search.destroy();

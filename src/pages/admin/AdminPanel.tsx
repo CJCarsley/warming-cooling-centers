@@ -86,8 +86,13 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
   const [isSavingAttrs, setIsSavingAttrs] = useState(false);
   const [saveAttrsError, setSaveAttrsError] = useState<string | null>(null);
 
+  const [pendingDelete, setPendingDelete] = useState<{ facilityId: number; facilityName: string } | null>(null);
+  const [isDeletingId, setIsDeletingId] = useState<number | null>(null);
+
   const dialogRef = useRef<HTMLDialogElement>(null);
   const cancelBtnRef = useRef<HTMLButtonElement>(null);
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
+  const deleteCancelBtnRef = useRef<HTMLButtonElement>(null);
   const announcerRef = useRef<HTMLDivElement>(null);
   const addNewBtnRef = useRef<HTMLButtonElement>(null);
   const firstEditFieldRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
@@ -159,6 +164,15 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
       });
     }
   }, [pendingToggle]);
+
+  useEffect(() => {
+    if (pendingDelete) {
+      requestAnimationFrame(() => {
+        deleteDialogRef.current?.showModal();
+        deleteCancelBtnRef.current?.focus();
+      });
+    }
+  }, [pendingDelete]);
 
   const initiateToggle = useCallback(
     (facility: AdminFacility, field: EditStatusField) => {
@@ -435,7 +449,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
       const res = await fetch(`${resolvedApiBase}facilities/notifications`, {
         method: 'PATCH',
         headers: { Authorization: tok, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ facilityId, notificationEmails: notifEmails }),
+        body: JSON.stringify({ facilityId, emails: notifEmails }),
       });
       if (!res.ok) {
         const errData = (await res.json()) as { error?: string };
@@ -450,6 +464,32 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
       setIsNotifSaving(false);
     }
   }, [notifEmails, t]);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!pendingDelete) return;
+    const { facilityId } = pendingDelete;
+    deleteDialogRef.current?.close();
+    setPendingDelete(null);
+    setIsDeletingId(facilityId);
+    try {
+      const session = await fetchAuthSession();
+      const tok = session.tokens?.idToken?.toString() ?? '';
+      const res = await fetch(`${resolvedApiBase}facility/delete`, {
+        method: 'POST',
+        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ objectId: facilityId }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setFacilities((prev) => prev.filter((f) => f.ObjectID !== facilityId));
+      setExpandedId(null);
+      setAnnouncement(t('admin.deleteFacility.deleteSuccess'));
+    } catch (err) {
+      console.error('delete error:', err);
+      setAnnouncement(t('admin.deleteFacility.deleteError'));
+    } finally {
+      setIsDeletingId(null);
+    }
+  }, [pendingDelete, t]);
 
   const conflictType = pendingToggle?.clearField === 'Warming_Active'
     ? t('admin.panel.warming')
@@ -647,6 +687,21 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
                           )}
                         </div>
                       </div>
+
+                      {isExpanded && (
+                        <button
+                          type="button"
+                          className={styles.deleteLink}
+                          disabled={isDeletingId === facility.ObjectID}
+                          onClick={() =>
+                            setPendingDelete({ facilityId: facility.ObjectID, facilityName: facility.Name })
+                          }
+                        >
+                          {isDeletingId === facility.ObjectID
+                            ? t('admin.deleteFacility.deleting')
+                            : t('admin.deleteFacility.link')}
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -807,6 +862,40 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
             className={styles.btnPrimary}
           >
             {t('admin.panel.confirmYes')}
+          </button>
+        </div>
+      </dialog>
+
+      {/* Delete confirmation dialog */}
+      <dialog
+        ref={deleteDialogRef}
+        className={styles.dialog}
+        aria-modal="true"
+        aria-labelledby="delete-dialog-title"
+      >
+        <h2 id="delete-dialog-title" className={styles.dialogTitle}>
+          {t('admin.deleteFacility.confirmTitle')}
+        </h2>
+        <p className={styles.dialogMessage}>
+          {pendingDelete
+            ? t('admin.deleteFacility.confirmMessage', { name: pendingDelete.facilityName })
+            : ''}
+        </p>
+        <div className={styles.dialogActions}>
+          <button
+            type="button"
+            ref={deleteCancelBtnRef}
+            onClick={() => { deleteDialogRef.current?.close(); setPendingDelete(null); }}
+            className={styles.btnSecondary}
+          >
+            {t('admin.panel.confirmNo')}
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleDeleteConfirm()}
+            className={styles.btnDanger}
+          >
+            {t('admin.deleteFacility.confirmYes')}
           </button>
         </div>
       </dialog>

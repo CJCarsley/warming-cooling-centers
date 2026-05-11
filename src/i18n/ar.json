@@ -127,6 +127,15 @@
       "keepOpenActive": "استثناء إعادة الضبط الليلية نشط",
       "conflictWarning": "ملاحظة: تفعيل {{newType}} سيؤدي تلقائياً إلى إلغاء تفعيل {{clearType}}."
     },
+    "deleteFacility": {
+      "link": "Delete",
+      "confirmTitle": "Delete Facility",
+      "confirmMessage": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+      "confirmYes": "Yes, delete",
+      "deleting": "Deleting…",
+      "deleteSuccess": "Facility deleted successfully.",
+      "deleteError": "Failed to delete facility. Please try again."
+    },
     "notifications": {
       "link": "Set Notifications",
       "cancelLink": "Cancel Notifications",

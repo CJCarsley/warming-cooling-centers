@@ -95,13 +95,18 @@ main {
     overflow: hidden;
   }
 
+  /* Use 100dvh directly so third-party CSS (e.g. Amplify UI) can't break
+     the layout by overriding html/body heights after lazy-loading. */
   #root {
-    height: 100%;
+    height: 100dvh;
     min-height: 0;
     overflow: hidden;
   }
 
+  /* flex: 1 1 0 (not auto) ensures main takes exactly the space between
+     header and footer regardless of content size. */
   main {
+    flex: 1 1 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     min-height: 0;

@@ -3,6 +3,7 @@
   color: #d0dbe8;
   padding: 1.5rem 1rem;
   margin-top: auto;
+  flex-shrink: 0;
 }
 
 .inner {

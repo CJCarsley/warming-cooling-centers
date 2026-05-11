@@ -127,6 +127,15 @@
       "keepOpenActive": "Ngoại lệ đặt lại nửa đêm đang hoạt động",
       "conflictWarning": "Lưu ý: bật {{newType}} sẽ tự động tắt {{clearType}}."
     },
+    "deleteFacility": {
+      "link": "Delete",
+      "confirmTitle": "Delete Facility",
+      "confirmMessage": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+      "confirmYes": "Yes, delete",
+      "deleting": "Deleting…",
+      "deleteSuccess": "Facility deleted successfully.",
+      "deleteError": "Failed to delete facility. Please try again."
+    },
     "notifications": {
       "link": "Set Notifications",
       "cancelLink": "Cancel Notifications",

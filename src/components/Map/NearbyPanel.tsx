@@ -21,7 +21,11 @@ export default function NearbyPanel({ results, originPoint, onClose }: NearbyPan
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   return (
-    <div className={styles.panel} role="region" aria-labelledby={headingId}>
+    <div
+      className={`${styles.panel} ${expandedIdx !== null ? styles.panelDetailOpen : ''}`}
+      role="region"
+      aria-labelledby={headingId}
+    >
       <div className={styles.header}>
         <h2 id={headingId} className={styles.title}>
           {t('nearby.heading')}
