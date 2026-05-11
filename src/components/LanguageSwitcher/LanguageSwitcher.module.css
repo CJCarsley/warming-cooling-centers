@@ -34,3 +34,14 @@
   background-color: var(--color-primary);
   color: #ffffff;
 }
+
+@media (max-width: 600px) {
+  .label {
+    display: none;
+  }
+
+  .select {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.8125rem;
+  }
+}
