@@ -16,6 +16,7 @@ Amplify.configure(outputs as Parameters<typeof Amplify.configure>[0]);
 // Inject our proxy token for every ArcGIS JS API request to our org's services.
 // The before() handler is async — getPublicArcGISToken() serves from cache after
 // the first call so there is no per-request network overhead.
+esriConfig.request.interceptors ??= [];
 esriConfig.request.interceptors.push({
   urls: 'https://services.arcgis.com/pDAi2YK0L0QxVJHj/',
   before: async (params) => {
