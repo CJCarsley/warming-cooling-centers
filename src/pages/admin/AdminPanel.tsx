@@ -46,9 +46,10 @@ interface AdminPanelProps {
   signOut: () => void;
   userEmail: string;
   isSuperAdmin?: boolean;
+  isAdmin?: boolean;
 }
 
-export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPanelProps) {
+export default function AdminPanel({ signOut, userEmail, isSuperAdmin, isAdmin }: AdminPanelProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const wasUnauthorized = (location.state as { unauthorized?: boolean })?.unauthorized;
@@ -533,7 +534,7 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin }: AdminPa
       <div className={styles.header}>
         <div>
           <h1 className={styles.welcome}>{t('admin.panel.welcome', { email })}</h1>
-          {isSuperAdmin && (
+          {(isSuperAdmin || isAdmin) && (
             <nav aria-label={t('admin.panel.adminNavLabel')}>
               <Link to="/admin/users" className={styles.adminNavLink}>
                 {t('admin.users.navLink')}

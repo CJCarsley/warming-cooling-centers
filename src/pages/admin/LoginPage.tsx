@@ -62,6 +62,7 @@ function AuthenticatedArea({
       signOut={signOut}
       userEmail={userEmail}
       isSuperAdmin={isSuperAdmin}
+      isAdmin={isAdmin}
     />
   );
 }
