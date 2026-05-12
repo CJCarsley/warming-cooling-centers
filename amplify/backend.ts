@@ -27,6 +27,7 @@ import { getFacilityNotifications } from './functions/getFacilityNotifications/r
 import { setFacilityNotifications } from './functions/setFacilityNotifications/resource';
 import { deleteFacility } from './functions/deleteFacility/resource';
 import { manageUserRole } from './functions/manageUserRole/resource';
+import { getArcGISPublicToken } from './functions/getArcGISPublicToken/resource';
 
 const backend = defineBackend({
   auth,
@@ -42,6 +43,7 @@ const backend = defineBackend({
   setFacilityNotifications,
   deleteFacility,
   manageUserRole,
+  getArcGISPublicToken,
 });
 
 // Password policy via CDK override (not exposed in defineAuth API)
@@ -223,6 +225,13 @@ keepOpenResource.addMethod(
   new LambdaIntegration(backend.updateKeepOpen.resources.lambda),
   { authorizer },
 );
+
+// GET /arcgis-token — public endpoint (no Cognito auth); returns a short-lived
+// ArcGIS token so the browser can access a privately-shared feature layer.
+// The client caches this token and refreshes it before expiry.
+api.root
+  .addResource('arcgis-token')
+  .addMethod('GET', new LambdaIntegration(backend.getArcGISPublicToken.resources.lambda));
 
 const notificationsResource = facilitiesResource.addResource('notifications');
 notificationsResource.addMethod(
