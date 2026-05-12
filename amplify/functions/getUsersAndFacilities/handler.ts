@@ -2,6 +2,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import {
   CognitoIdentityProviderClient,
   ListUsersCommand,
+  ListUsersInGroupCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 
 const USER_POOL_ID = process.env.USER_POOL_ID!;
@@ -47,9 +48,9 @@ export const handler = async (
   const claims = event.requestContext.authorizer?.claims as
     | Record<string, string>
     | undefined;
-  const groups = parseGroups(claims?.['cognito:groups']);
+  const callerGroups = parseGroups(claims?.['cognito:groups']);
 
-  if (!groups.includes('SuperAdmin')) {
+  if (!callerGroups.includes('SuperAdmin') && !callerGroups.includes('Admin')) {
     return {
       statusCode: 403,
       headers: CORS_HEADERS,
@@ -58,18 +59,42 @@ export const handler = async (
   }
 
   try {
-    const usersResult = await cognito.send(
-      new ListUsersCommand({ UserPoolId: USER_POOL_ID, Limit: 60 }),
+    const [usersResult, adminGroupResult, superAdminGroupResult] = await Promise.all([
+      cognito.send(new ListUsersCommand({ UserPoolId: USER_POOL_ID, Limit: 60 })),
+      cognito.send(
+        new ListUsersInGroupCommand({ UserPoolId: USER_POOL_ID, GroupName: 'Admin', Limit: 60 }),
+      ),
+      cognito.send(
+        new ListUsersInGroupCommand({
+          UserPoolId: USER_POOL_ID,
+          GroupName: 'SuperAdmin',
+          Limit: 60,
+        }),
+      ),
+    ]);
+
+    const adminUsernames = new Set(
+      (adminGroupResult.Users ?? []).map((u) => u.Username ?? ''),
+    );
+    const superAdminUsernames = new Set(
+      (superAdminGroupResult.Users ?? []).map((u) => u.Username ?? ''),
     );
 
-    const users = (usersResult.Users ?? []).map((u) => ({
-      username: u.Username ?? '',
-      email: u.Attributes?.find((a) => a.Name === 'email')?.Value ?? '',
-      status: u.UserStatus ?? 'UNKNOWN',
-      enabled: u.Enabled ?? false,
-      facilityIds:
-        u.Attributes?.find((a) => a.Name === 'custom:facility_ids')?.Value ?? '',
-    }));
+    const users = (usersResult.Users ?? []).map((u) => {
+      const username = u.Username ?? '';
+      const userGroups: string[] = [];
+      if (adminUsernames.has(username)) userGroups.push('Admin');
+      if (superAdminUsernames.has(username)) userGroups.push('SuperAdmin');
+      return {
+        username,
+        email: u.Attributes?.find((a) => a.Name === 'email')?.Value ?? '',
+        status: u.UserStatus ?? 'UNKNOWN',
+        enabled: u.Enabled ?? false,
+        facilityIds:
+          u.Attributes?.find((a) => a.Name === 'custom:facility_ids')?.Value ?? '',
+        groups: userGroups,
+      };
+    });
 
     const params = new URLSearchParams({
       where: '1=1',

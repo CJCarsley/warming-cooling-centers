@@ -4,6 +4,7 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 export function useAuthGroups(): {
   groups: string[];
   isSuperAdmin: boolean;
+  isAdmin: boolean;
   isLoading: boolean;
 } {
   const [groups, setGroups] = useState<string[]>([]);
@@ -30,5 +31,10 @@ export function useAuthGroups(): {
     };
   }, []);
 
-  return { groups, isSuperAdmin: groups.includes('SuperAdmin'), isLoading };
+  return {
+    groups,
+    isSuperAdmin: groups.includes('SuperAdmin'),
+    isAdmin: groups.includes('Admin'),
+    isLoading,
+  };
 }

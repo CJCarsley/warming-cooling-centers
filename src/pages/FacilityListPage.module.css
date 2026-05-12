@@ -1,0 +1,138 @@
+.page {
+  padding: 1.5rem 1rem 2rem;
+}
+
+.inner {
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 0.375rem;
+}
+
+.subheading {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.loading,
+.empty {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  padding: 1.25rem 0;
+}
+
+.errorMsg {
+  font-size: 0.9375rem;
+  color: var(--color-capacity-full);
+  background: #fff5f5;
+  border: 1px solid #fcc;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.count {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 0.75rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  background: var(--color-surface);
+}
+
+.table thead tr {
+  background: var(--color-bg);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.table th {
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  vertical-align: top;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: var(--color-bg);
+}
+
+.nameCell {
+  font-weight: 600;
+  min-width: 160px;
+}
+
+.addressLink,
+.phoneLink {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.addressLink:hover,
+.phoneLink:hover {
+  color: var(--color-primary-light);
+}
+
+.addressLink:focus-visible,
+.phoneLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeWarming {
+  background: #fff0e6;
+  color: #7a2900;
+}
+
+.badgeCooling {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+
+.badgeDual {
+  background: #f3e5f5;
+  color: #4a148c;
+}

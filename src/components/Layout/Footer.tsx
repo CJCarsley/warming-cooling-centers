@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styles from './Footer.module.css';
 
@@ -9,9 +10,9 @@ export default function Footer() {
     <footer className={styles.footer}>
       <div className={styles.inner}>
         <div className={styles.links}>
-          <a href="/accessibility" className={styles.link}>
+          <Link to="/accessibility" className={styles.link}>
             {t('footer.accessibilityStatement')}
-          </a>
+          </Link>
           <a
             href="https://contact.dogis.org/"
             className={styles.link}

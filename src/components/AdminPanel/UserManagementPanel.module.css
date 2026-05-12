@@ -212,7 +212,14 @@
 }
 
 .actionCell {
-  white-space: nowrap;
+  min-width: 200px;
+}
+
+.actionBtns {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .noResults {
@@ -275,6 +282,70 @@
 }
 
 .editBtn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ── Admin badge ──────────────────────────────────────────────────────────── */
+
+.adminBadge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 10px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #e3f2fd;
+  color: #0d47a1;
+  vertical-align: middle;
+}
+
+/* ── Role buttons ─────────────────────────────────────────────────────────── */
+
+.grantRoleBtn,
+.removeRoleBtn {
+  padding: 0.35rem 0.75rem;
+  min-height: 36px;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.grantRoleBtn {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.grantRoleBtn:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.removeRoleBtn {
+  background: var(--color-surface);
+  color: var(--color-capacity-full);
+  border: 1px solid var(--color-capacity-full);
+}
+
+.removeRoleBtn:hover {
+  background: var(--color-capacity-full);
+  color: #fff;
+}
+
+.grantRoleBtn:disabled,
+.removeRoleBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.grantRoleBtn:focus-visible,
+.removeRoleBtn:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }

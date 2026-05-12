@@ -36,6 +36,17 @@ export default function Header() {
               </li>
               <li>
                 <NavLink
+                  to="/list"
+                  title={t('nav.listTitle')}
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${styles.navLinkLogin} ${isActive ? styles.navLinkActive : ''}`
+                  }
+                >
+                  {t('nav.list')}
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
                   to="/admin"
                   className={({ isActive }) =>
                     `${styles.navLink} ${styles.navLinkLogin} ${isActive ? styles.navLinkActive : ''}`

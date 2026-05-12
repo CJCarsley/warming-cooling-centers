@@ -6,6 +6,8 @@
   "nav": {
     "map": "Mapa",
     "home": "Inicio",
+    "list": "Lista",
+    "listTitle": "Ver Centros como Lista",
     "staffLogin": "Acceso del Personal",
     "ariaLabel": "Navegación principal"
   },
@@ -94,6 +96,18 @@
     "translating": "Traduciendo contenido…",
     "translationComplete": "Traducción completa"
   },
+  "facilityList": {
+    "heading": "Centros Activos",
+    "subheading": "Todos los centros de calefacción y refrigeración actualmente activos en el Condado Douglas.",
+    "noActive": "No hay centros de calefacción ni refrigeración activos actualmente.",
+    "count_one": "{{count}} centro activo",
+    "count_other": "{{count}} centros activos",
+    "tableAriaLabel": "Centros de calefacción y refrigeración activos",
+    "colType": "Tipo",
+    "typeWarming": "Calefacción",
+    "typeCooling": "Refrigeración",
+    "typeBoth": "Calefacción y Refrigeración"
+  },
   "admin": {
     "login": {
       "title": "Acceso del Personal",
@@ -150,7 +164,16 @@
       "statusConfirmed": "Confirmado",
       "statusUnconfirmed": "No confirmado",
       "statusForceChange": "Restablecimiento de contraseña requerido",
-      "statusUnknown": "Desconocido"
+      "statusUnknown": "Desconocido",
+      "tableRole": "Rol",
+      "adminBadge": "Admin",
+      "grantAdmin": "Otorgar Admin",
+      "removeAdmin": "Quitar Admin",
+      "grantAdminAria": "Otorgar rol de Admin a {{email}}",
+      "removeAdminAria": "Quitar rol de Admin a {{email}}",
+      "roleGrantSuccess": "Rol de Admin otorgado a {{email}}",
+      "roleRemoveSuccess": "Rol de Admin quitado de {{email}}",
+      "roleError": "Error al actualizar el rol. Por favor, inténtelo de nuevo."
     },
     "addFacility": {
       "buttonLabel": "+ Agregar Nuevo",

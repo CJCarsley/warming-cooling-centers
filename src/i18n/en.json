@@ -6,6 +6,8 @@
   "nav": {
     "map": "Map",
     "home": "Home",
+    "list": "List",
+    "listTitle": "View Facilities as List",
     "staffLogin": "Staff Login",
     "ariaLabel": "Main navigation"
   },
@@ -95,6 +97,18 @@
     "translating": "Translating content…",
     "translationComplete": "Translation complete"
   },
+  "facilityList": {
+    "heading": "Active Facilities",
+    "subheading": "All currently active warming and cooling centers in Douglas County.",
+    "noActive": "No warming or cooling centers are currently active.",
+    "count_one": "{{count}} active facility",
+    "count_other": "{{count}} active facilities",
+    "tableAriaLabel": "Active warming and cooling facilities",
+    "colType": "Type",
+    "typeWarming": "Warming",
+    "typeCooling": "Cooling",
+    "typeBoth": "Warming & Cooling"
+  },
   "admin": {
     "login": {
       "title": "Staff Login",
@@ -151,7 +165,16 @@
       "statusConfirmed": "Confirmed",
       "statusUnconfirmed": "Unconfirmed",
       "statusForceChange": "Password Reset Required",
-      "statusUnknown": "Unknown"
+      "statusUnknown": "Unknown",
+      "tableRole": "Role",
+      "adminBadge": "Admin",
+      "grantAdmin": "Grant Admin",
+      "removeAdmin": "Remove Admin",
+      "grantAdminAria": "Grant Admin role to {{email}}",
+      "removeAdminAria": "Remove Admin role from {{email}}",
+      "roleGrantSuccess": "Admin role granted to {{email}}",
+      "roleRemoveSuccess": "Admin role removed from {{email}}",
+      "roleError": "Failed to update role. Please try again."
     },
     "addFacility": {
       "buttonLabel": "+ Add New",

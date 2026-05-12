@@ -25,7 +25,10 @@ interface CognitoUser {
   status: string;
   enabled: boolean;
   facilityIds: string;
+  groups: string[];
 }
+
+const PROTECTED_EMAIL = 'cjcarsley@douglascounty-ne.gov';
 
 interface Facility {
   objectId: number;
@@ -170,6 +173,7 @@ export default function UserManagementPanel({
   const [pendingCheckboxes, setPendingCheckboxes] = useState<Set<number>>(
     new Set(),
   );
+  const [pendingRoleChange, setPendingRoleChange] = useState<Set<string>>(new Set());
   // Tracks live facility_ids per username (overrides initial data after changes)
   const [overrideFacilityIds, setOverrideFacilityIds] = useState<
     Map<string, string>
@@ -324,6 +328,53 @@ export default function UserManagementPanel({
     [facilities, addToast, t],
   );
 
+  // ── Admin role toggle ──────────────────────────────────────────────────────
+  const handleRoleToggle = useCallback(
+    async (user: CognitoUser, currentlyAdmin: boolean) => {
+      const action = currentlyAdmin ? 'remove' : 'add';
+      setPendingRoleChange((prev) => new Set(prev).add(user.username));
+
+      try {
+        const session = await fetchAuthSession();
+        const token = session.tokens?.idToken?.toString() ?? '';
+        const res = await fetch(`${apiBase}admin/users/role`, {
+          method: 'POST',
+          headers: { Authorization: token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetUsername: user.username, action, group: 'Admin' }),
+        });
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          console.error('POST /admin/users/role failed:', res.status, errText);
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        setUsers((prev) =>
+          prev.map((u) => {
+            if (u.username !== user.username) return u;
+            const newGroups =
+              action === 'add'
+                ? [...u.groups, 'Admin']
+                : u.groups.filter((g) => g !== 'Admin');
+            return { ...u, groups: newGroups };
+          }),
+        );
+
+        const key =
+          action === 'add' ? 'admin.users.roleGrantSuccess' : 'admin.users.roleRemoveSuccess';
+        addToast('success', t(key, { email: user.email }));
+      } catch {
+        addToast('error', t('admin.users.roleError'));
+      } finally {
+        setPendingRoleChange((prev) => {
+          const next = new Set(prev);
+          next.delete(user.username);
+          return next;
+        });
+      }
+    },
+    [addToast, t],
+  );
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className={styles.panel}>
@@ -425,7 +476,14 @@ export default function UserManagementPanel({
                   const count = getAssignedIds(user.username).size;
                   return (
                     <tr key={user.username} className={styles.userRow}>
-                      <td className={styles.emailCell}>{user.email}</td>
+                      <td className={styles.emailCell}>
+                        {user.email}
+                        {user.groups.includes('Admin') && (
+                          <span className={styles.adminBadge} aria-label={t('admin.users.adminBadge')}>
+                            {t('admin.users.adminBadge')}
+                          </span>
+                        )}
+                      </td>
                       <td>
                         <StatusBadge status={user.status} />
                       </td>
@@ -433,20 +491,51 @@ export default function UserManagementPanel({
                         {t('admin.users.facilitiesCount', { count })}
                       </td>
                       <td className={styles.actionCell}>
-                        <button
-                          type="button"
-                          ref={(el) => {
-                            if (el) editBtnRefs.current.set(user.username, el);
-                            else editBtnRefs.current.delete(user.username);
-                          }}
-                          className={styles.editBtn}
-                          onClick={() => openModal(user)}
-                          aria-label={t('admin.users.editAssignmentsAria', {
-                            email: user.email,
-                          })}
-                        >
-                          {t('admin.users.editAssignments')}
-                        </button>
+                        <div className={styles.actionBtns}>
+                          <button
+                            type="button"
+                            ref={(el) => {
+                              if (el) editBtnRefs.current.set(user.username, el);
+                              else editBtnRefs.current.delete(user.username);
+                            }}
+                            className={styles.editBtn}
+                            onClick={() => openModal(user)}
+                            aria-label={t('admin.users.editAssignmentsAria', {
+                              email: user.email,
+                            })}
+                          >
+                            {t('admin.users.editAssignments')}
+                          </button>
+                          {!user.groups.includes('SuperAdmin') && (
+                            <button
+                              type="button"
+                              className={
+                                user.groups.includes('Admin')
+                                  ? styles.removeRoleBtn
+                                  : styles.grantRoleBtn
+                              }
+                              onClick={() =>
+                                void handleRoleToggle(user, user.groups.includes('Admin'))
+                              }
+                              disabled={
+                                pendingRoleChange.has(user.username) ||
+                                (user.email === PROTECTED_EMAIL &&
+                                  user.groups.includes('Admin'))
+                              }
+                              aria-label={
+                                user.groups.includes('Admin')
+                                  ? t('admin.users.removeAdminAria', { email: user.email })
+                                  : t('admin.users.grantAdminAria', { email: user.email })
+                              }
+                            >
+                              {pendingRoleChange.has(user.username)
+                                ? '…'
+                                : user.groups.includes('Admin')
+                                  ? t('admin.users.removeAdmin')
+                                  : t('admin.users.grantAdmin')}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

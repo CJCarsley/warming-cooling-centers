@@ -6,6 +6,9 @@
   "nav": {
     "map": "Bản Đồ",
     "home": "Trang Chủ",
+    "list": "Danh Sách",
+    "listTitle": "Xem Cơ Sở dạng Danh Sách",
+    "staffLogin": "Đăng Nhập Nhân Viên",
     "ariaLabel": "Điều hướng chính"
   },
   "header": {
@@ -92,6 +95,18 @@
   "announcer": {
     "translating": "Đang dịch nội dung…",
     "translationComplete": "Dịch xong"
+  },
+  "facilityList": {
+    "heading": "Cơ Sở Đang Hoạt Động",
+    "subheading": "Tất cả các trung tâm sưởi ấm và làm mát đang hoạt động tại Quận Douglas.",
+    "noActive": "Hiện không có trung tâm sưởi ấm hoặc làm mát nào đang hoạt động.",
+    "count_one": "{{count}} cơ sở đang hoạt động",
+    "count_other": "{{count}} cơ sở đang hoạt động",
+    "tableAriaLabel": "Các cơ sở sưởi ấm và làm mát đang hoạt động",
+    "colType": "Loại",
+    "typeWarming": "Sưởi Ấm",
+    "typeCooling": "Làm Mát",
+    "typeBoth": "Sưởi Ấm & Làm Mát"
   },
   "admin": {
     "login": {

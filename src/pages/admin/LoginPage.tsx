@@ -39,20 +39,21 @@ function AuthenticatedArea({
   userEmail,
   isUsersRoute,
 }: AuthenticatedAreaProps) {
-  const { isSuperAdmin, isLoading } = useAuthGroups();
+  const { isSuperAdmin, isAdmin, isLoading } = useAuthGroups();
   const navigate = useNavigate();
+  const canManageUsers = isSuperAdmin || isAdmin;
 
-  // Redirect non-SuperAdmin away from /admin/users
+  // Redirect users without admin privileges away from /admin/users
   useEffect(() => {
-    if (isUsersRoute && !isLoading && !isSuperAdmin) {
+    if (isUsersRoute && !isLoading && !canManageUsers) {
       navigate('/admin', { replace: true, state: { unauthorized: true } });
     }
-  }, [isUsersRoute, isLoading, isSuperAdmin, navigate]);
+  }, [isUsersRoute, isLoading, canManageUsers, navigate]);
 
   if (isUsersRoute) {
     if (isLoading) return <LoadingSpinner />;
     // Renders null briefly while the redirect fires
-    if (!isSuperAdmin) return null;
+    if (!canManageUsers) return null;
     return <UserManagementPanel signOut={signOut} userEmail={userEmail} />;
   }
 

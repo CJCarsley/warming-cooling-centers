@@ -9,6 +9,8 @@ import MapViewComponent from './components/Map/MapView';
 import './App.css';
 
 const LoginPage = lazy(() => import('./pages/admin/LoginPage'));
+const FacilityListPage = lazy(() => import('./pages/FacilityListPage'));
+const AccessibilityStatement = lazy(() => import('./pages/AccessibilityStatement'));
 
 function LoadingSpinner() {
   return (
@@ -41,6 +43,8 @@ function AppShell() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/" element={<MapViewComponent />} />
+            <Route path="/list" element={<FacilityListPage />} />
+            <Route path="/accessibility" element={<AccessibilityStatement />} />
             <Route path="/admin/*" element={<LoginPage />} />
           </Routes>
         </Suspense>
