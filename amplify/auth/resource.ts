@@ -8,7 +8,7 @@ export const auth = defineAuth({
     mode: 'OPTIONAL',
     totp: true,
   },
-  groups: ['SuperAdmin'],
+  groups: ['SuperAdmin', 'Admin'],
   userAttributes: {
     'custom:facility_ids': {
       dataType: 'String',

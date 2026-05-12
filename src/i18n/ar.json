@@ -6,6 +6,9 @@
   "nav": {
     "map": "الخريطة",
     "home": "الرئيسية",
+    "list": "القائمة",
+    "listTitle": "عرض المراكز كقائمة",
+    "staffLogin": "دخول الموظفين",
     "ariaLabel": "التنقل الرئيسي"
   },
   "header": {
@@ -92,6 +95,18 @@
   "announcer": {
     "translating": "جارٍ ترجمة المحتوى…",
     "translationComplete": "اكتملت الترجمة"
+  },
+  "facilityList": {
+    "heading": "المراكز النشطة",
+    "subheading": "جميع مراكز التدفئة والتبريد النشطة حاليًا في مقاطعة دوغلاس.",
+    "noActive": "لا توجد مراكز تدفئة أو تبريد نشطة حاليًا.",
+    "count_one": "{{count}} مركز نشط",
+    "count_other": "{{count}} مراكز نشطة",
+    "tableAriaLabel": "مراكز التدفئة والتبريد النشطة",
+    "colType": "النوع",
+    "typeWarming": "تدفئة",
+    "typeCooling": "تبريد",
+    "typeBoth": "تدفئة وتبريد"
   },
   "admin": {
     "login": {

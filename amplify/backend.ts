@@ -26,6 +26,7 @@ import { updateFacilityAttributes } from './functions/updateFacilityAttributes/r
 import { getFacilityNotifications } from './functions/getFacilityNotifications/resource';
 import { setFacilityNotifications } from './functions/setFacilityNotifications/resource';
 import { deleteFacility } from './functions/deleteFacility/resource';
+import { manageUserRole } from './functions/manageUserRole/resource';
 
 const backend = defineBackend({
   auth,
@@ -40,6 +41,7 @@ const backend = defineBackend({
   getFacilityNotifications,
   setFacilityNotifications,
   deleteFacility,
+  manageUserRole,
 });
 
 // Password policy via CDK override (not exposed in defineAuth API)
@@ -74,6 +76,7 @@ const updateFacilityAttrsFn = backend.updateFacilityAttributes.resources.lambda 
 const getFacilityNotificationsFn = backend.getFacilityNotifications.resources.lambda as LambdaFunction;
 const setFacilityNotificationsFn = backend.setFacilityNotifications.resources.lambda as LambdaFunction;
 const deleteFacilityFn = backend.deleteFacility.resources.lambda as LambdaFunction;
+const manageUserRoleFn = backend.manageUserRole.resources.lambda as LambdaFunction;
 
 updateStatusFn.addToRolePolicy(
   new PolicyStatement({
@@ -87,11 +90,24 @@ getUsersFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 updateFacilitiesFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 addFacilityFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 deleteFacilityFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
+manageUserRoleFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 
 getUsersFn.addToRolePolicy(
   new PolicyStatement({
     effect: Effect.ALLOW,
-    actions: ['cognito-idp:ListUsers'],
+    actions: ['cognito-idp:ListUsers', 'cognito-idp:ListUsersInGroup'],
+    resources: [userPoolArn],
+  }),
+);
+
+manageUserRoleFn.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: [
+      'cognito-idp:AdminGetUser',
+      'cognito-idp:AdminAddUserToGroup',
+      'cognito-idp:AdminRemoveUserFromGroup',
+    ],
     resources: [userPoolArn],
   }),
 );
@@ -251,6 +267,14 @@ usersResource
   .addMethod(
     'PATCH',
     new LambdaIntegration(backend.updateUserFacilities.resources.lambda),
+    { authorizer },
+  );
+
+usersResource
+  .addResource('role')
+  .addMethod(
+    'POST',
+    new LambdaIntegration(backend.manageUserRole.resources.lambda),
     { authorizer },
   );
 
