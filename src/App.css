@@ -95,11 +95,13 @@ main {
     overflow: hidden;
   }
 
-  /* Use 100dvh directly so third-party CSS (e.g. Amplify UI) can't break
-     the layout by overriding html/body heights after lazy-loading. */
+  /* position:fixed + inset:0 anchors #root directly to the visual viewport,
+     bypassing any html/body height or overflow changes injected by third-party
+     CSS (e.g. Amplify UI loaded after our styles). This is more robust than
+     height:100dvh because it is immune to parent-container sizing entirely. */
   #root {
-    height: 100dvh;
-    min-height: 0;
+    position: fixed;
+    inset: 0;
     overflow: hidden;
   }
 

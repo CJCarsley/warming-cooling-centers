@@ -40,9 +40,9 @@ export const handler = async (
       }),
     );
 
-    const found = (result.Responses?.[TABLE_NAME] ?? []).map((item) =>
-      Number(item.facilityId),
-    );
+    const found = (result.Responses?.[TABLE_NAME] ?? [])
+      .filter((item) => item.keepOpen === true)
+      .map((item) => Number(item.facilityId));
 
     return {
       statusCode: 200,

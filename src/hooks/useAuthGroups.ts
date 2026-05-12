@@ -13,7 +13,7 @@ export function useAuthGroups(): {
   useEffect(() => {
     let cancelled = false;
 
-    fetchAuthSession()
+    fetchAuthSession({ forceRefresh: true })
       .then((session) => {
         const raw = session.tokens?.idToken?.payload['cognito:groups'];
         const g = Array.isArray(raw) ? (raw as string[]) : [];
