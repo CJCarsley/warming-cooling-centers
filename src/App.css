@@ -102,6 +102,9 @@ main {
   #root {
     position: fixed;
     inset: 0;
+    min-height: 0; /* cancel desktop min-height:100vh; without this, iOS Safari's
+                      100vh > visual viewport pushes the grid taller than the screen
+                      and overflow:hidden clips the footer off the bottom */
     overflow: hidden;
     display: grid;
     grid-template-rows: auto 1fr auto;
