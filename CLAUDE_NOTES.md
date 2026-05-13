@@ -264,7 +264,7 @@ bundle time.
   `amplify/functions/addFacility/`, `amplify/functions/updateFacilityAttributes/`,
   `amplify/functions/shared/arcgisToken.ts`
 
-### feature/updates-2.0 — open PR (2026-05-12)
+### feature/updates-2.0 — merged (PR #18 — 2026-05-12)
 
 **Task 1 — Mobile tooltip fix:**
 - `.facilityCard` had `overflow: hidden` which clipped the absolutely-positioned Keep Open tooltip
@@ -306,6 +306,101 @@ bundle time.
   - Grant/Remove Admin button per user row (hidden for SuperAdmin users; Remove Admin disabled for protected email)
   - `handleRoleToggle` optimistically updates local state on success
 - Key constant: `PROTECTED_EMAIL = 'cjcarsley@douglascounty-ne.gov'` in both handler and panel
+
+### feature/update-2.1 — merged (PR #19 — 2026-05-13)
+
+**Fix 1 — User Management link visibility:**
+- `useAuthGroups.ts`: changed `fetchAuthSession()` → `fetchAuthSession({ forceRefresh: true })` so
+  Cognito group membership is always re-validated on each Staff Login page load (not served from JWT cache)
+- `AdminPanel.tsx`: `{isSuperAdmin && <NavLink>User Management</NavLink>}` → `{(isSuperAdmin || isAdmin) && ...}`
+  so all Admin-group users see the link, not just SuperAdmin
+
+**Fix 2 — Mobile white bar below footer:**
+- Root cause: after SPA navigation on mobile, `html/body` height and `#root` layout was not
+  anchored to the visual viewport; a gap appeared below the footer on some transitions
+- Fix in `src/App.css` mobile block: replaced `height: 100dvh; min-height: 0` on `#root` with
+  `position: fixed; inset: 0` — anchors the shell to the visual viewport, immune to browser chrome changes
+
+**Fix 3 — Keep Open Lambda false-positive (midnight resets ignoring overrides):**
+- `amplify/functions/getKeepOpen/handler.ts`: handler was returning ALL DynamoDB items without
+  filtering; facility had `keepOpen` attribute removed (REMOVE expression) so the item existed but
+  had no `keepOpen: true` — Lambda still returned it, causing AdminPanel to show override as active,
+  but `autoResetFacilities` found no `keepOpen: true` and reset anyway
+- Fix: added `.filter((item) => item.keepOpen === true)` before `.map()` in getKeepOpen handler
+
+**Token injection in AdminPanel (added for proxy compatibility):**
+- `AdminPanel.tsx`: added `getPublicArcGISToken` import; injected token into two raw fetch calls
+  (`loadFacilities` effect and `handleEditOpen` callback) that were previously using ArcGIS JS API
+  implicitly — needed after feature layer was made private in feature/proxy
+
+### feature/proxy — merged (PR #20 — 2026-05-13)
+
+New Lambda `getArcGISPublicToken` returns a short-lived ArcGIS token so the feature layer can be
+made **private** (unshared from public) while remaining accessible to all app users without Cognito auth.
+
+**Lambda** (`amplify/functions/getArcGISPublicToken/`):
+- Public API route — NO Cognito authorizer: `GET /arcgis-token`
+- Calls ArcGIS OAuth `client_credentials` grant with `ARCGIS_CLIENT_ID` / `ARCGIS_CLIENT_SECRET`
+- Returns `{ token: string, expires: number }` where `expires = Date.now() + (expires_in - 60) * 1000`
+  (60-second buffer so clients don't use a token that's about to expire)
+- Secrets stored in SSM, read via Amplify `secret()` in `resource.ts`
+
+**Client-side token cache** (`src/utils/arcgisToken.ts`):
+- Module-level `cache` (token + expiry); inflight-deduplication via a single `inflightRequest` promise
+- Serves cached token if >60s of life remains; otherwise fetches fresh
+- `export async function getPublicArcGISToken(): Promise<string>`
+
+**ArcGIS JS API interceptor** (`src/main.tsx`):
+- `esriConfig.request.interceptors.push({ urls: 'https://services.arcgis.com/pDAi2YK0L0QxVJHj/', before: async (params) => { ... inject token ... } })`
+- `esriConfig.request.interceptors ??= []` guard required (TypeScript TS18048 — value can be undefined)
+
+**Other files updated to use token**: `FacilityListPage.tsx`, `fieldSchemaCache.ts`, `AdminPanel.tsx`
+
+**ArcGIS Online config required** (manual steps, not in code):
+1. Create a new OAuth2 "Server app" in ArcGIS Developer portal with `client_credentials` grant
+2. Store client ID + secret in SSM under the Amplify branch secret path
+3. In ArcGIS Online, unshare the feature layer from Public; add the OAuth app identity as a viewer
+
+### feature/footer-update — merged (PRs #21 and #22 — 2026-05-13)
+
+Mobile footer had disappeared completely after the `position: fixed; inset: 0` change in update-2.1.
+
+**Root cause**: The desktop `#root { min-height: 100vh }` rule was never canceled in the mobile
+media query. On iOS Safari, `100vh` can exceed the visual viewport height (URL bar counts toward
+100vh). This pushed the CSS Grid container taller than the screen; `overflow: hidden` then clipped
+the footer (in the 3rd grid row) below the bottom of the visible area.
+
+**Fix** (`src/App.css` mobile block):
+- Added `display: grid; grid-template-rows: auto 1fr auto` to `#root` — gives header/main/footer
+  explicit rows so main's `flex-grow` can't starve the footer
+- Added `min-height: 0` to `#root` mobile rule to cancel the desktop `min-height: 100vh`
+- Added `overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0` to `main` so it
+  alone scrolls within the 1fr row
+
+**Current final state of the mobile block in App.css:**
+```css
+@media (max-width: 767px) {
+  html, body { height: 100%; overflow: hidden; }
+  #root {
+    position: fixed;
+    inset: 0;
+    min-height: 0;  /* cancels desktop min-height:100vh — iOS Safari 100vh > visual viewport */
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+  main {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+  }
+}
+```
+
+**iOS Safari viewport notes:**
+- `100vh` ≠ visual viewport height when the browser URL bar is visible. Use `position: fixed; inset: 0` to anchor to the visual viewport instead of relying on `height`/`min-height` values.
+- `100dvh` is a safer alternative to `100vh` for full-viewport layouts but was NOT used here because
+  `position: fixed; inset: 0` is more robust and avoids any unit-support questions on older iOS.
 
 ---
 
