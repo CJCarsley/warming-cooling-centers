@@ -95,20 +95,20 @@ main {
     overflow: hidden;
   }
 
-  /* position:fixed + inset:0 anchors #root directly to the visual viewport,
-     bypassing any html/body height or overflow changes injected by third-party
-     CSS (e.g. Amplify UI loaded after our styles). This is more robust than
-     height:100dvh because it is immune to parent-container sizing entirely. */
+  /* position:fixed + inset:0 anchors #root to the visual viewport, immune to
+     any html/body height changes injected by third-party CSS (e.g. Amplify UI).
+     CSS Grid with explicit rows guarantees the footer always gets its own row
+     and is never pushed out by flex-grow competition from the map content. */
   #root {
     position: fixed;
     inset: 0;
     overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
   }
 
-  /* flex: 1 1 0 (not auto) ensures main takes exactly the space between
-     header and footer regardless of content size. */
+  /* main fills exactly the 1fr row between header and footer. */
   main {
-    flex: 1 1 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     min-height: 0;
