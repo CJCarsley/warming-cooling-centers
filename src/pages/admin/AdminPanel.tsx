@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
 import { useTranslation } from 'react-i18next';
+import { getPublicArcGISToken } from '../../utils/arcgisToken';
 import type { AdminFacility, EditStatusField } from '../../types/facility';
 import { getFieldSchema } from '../../utils/fieldSchemaCache';
 import type { FieldDef } from '../../utils/fieldSchemaCache';
@@ -117,12 +118,15 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin, isAdmin }
 
         const [facilitiesRes, session] = await Promise.all([
           ids.length > 0
-            ? fetch(`${FEATURE_LAYER_URL}/query?${new URLSearchParams({
-                where: `ObjectID IN (${ids.join(',')})`,
-                outFields: 'ObjectID,Name,Address,Warming_Active,Cooling_Active,EditDate',
-                returnGeometry: 'false',
-                f: 'json',
-              })}`)
+            ? getPublicArcGISToken().then((token) =>
+                fetch(`${FEATURE_LAYER_URL}/query?${new URLSearchParams({
+                  where: `ObjectID IN (${ids.join(',')})`,
+                  outFields: 'ObjectID,Name,Address,Warming_Active,Cooling_Active,EditDate',
+                  returnGeometry: 'false',
+                  f: 'json',
+                  token,
+                })}`)
+              )
             : Promise.resolve(null),
           fetchAuthSession(),
         ]);
@@ -322,12 +326,15 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin, isAdmin }
     try {
       const [schema, queryRes] = await Promise.all([
         getFieldSchema(),
-        fetch(`${FEATURE_LAYER_URL}/query?${new URLSearchParams({
-          where: `OBJECTID=${facilityId}`,
-          outFields: '*',
-          returnGeometry: 'false',
-          f: 'json',
-        })}`),
+        getPublicArcGISToken().then((token) =>
+          fetch(`${FEATURE_LAYER_URL}/query?${new URLSearchParams({
+            where: `OBJECTID=${facilityId}`,
+            outFields: '*',
+            returnGeometry: 'false',
+            f: 'json',
+            token,
+          })}`)
+        ),
       ]);
 
       const queryData = (await queryRes.json()) as {

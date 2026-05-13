@@ -1,3 +1,5 @@
+import { getPublicArcGISToken } from './arcgisToken';
+
 const FEATURE_LAYER_URL =
   'https://services.arcgis.com/pDAi2YK0L0QxVJHj/arcgis/rest/services/Warming_and_Cooling_Centers/FeatureServer/0';
 
@@ -33,7 +35,8 @@ export async function getFieldSchema(): Promise<FieldDef[]> {
   if (cachedSchema) return cachedSchema;
   if (fetchPromise) return fetchPromise;
 
-  fetchPromise = fetch(`${FEATURE_LAYER_URL}?f=json`)
+  fetchPromise = getPublicArcGISToken()
+    .then((token) => fetch(`${FEATURE_LAYER_URL}?f=json&token=${encodeURIComponent(token)}`))
     .then((res) => res.json())
     .then((data: { fields?: FieldDef[] }) => {
       const fields = (data.fields ?? []).filter(

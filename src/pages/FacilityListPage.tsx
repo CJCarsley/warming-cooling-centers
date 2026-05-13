@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getPublicArcGISToken } from '../utils/arcgisToken';
 import styles from './FacilityListPage.module.css';
 
 const FEATURE_LAYER_URL =
@@ -64,15 +65,18 @@ export default function FacilityListPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const params = new URLSearchParams({
-      where: "Warming_Active='Yes' OR Cooling_Active='Yes'",
-      outFields: 'ObjectID,Name,Address,Warming_Active,Cooling_Active,Hours,Phone,ADA_Compliant',
-      returnGeometry: 'false',
-      orderByFields: 'Name ASC',
-      f: 'json',
-    });
-
-    void fetch(`${FEATURE_LAYER_URL}/query?${params.toString()}`)
+    void getPublicArcGISToken()
+      .then((token) => {
+        const params = new URLSearchParams({
+          where: "Warming_Active='Yes' OR Cooling_Active='Yes'",
+          outFields: 'ObjectID,Name,Address,Warming_Active,Cooling_Active,Hours,Phone,ADA_Compliant',
+          returnGeometry: 'false',
+          orderByFields: 'Name ASC',
+          f: 'json',
+          token,
+        });
+        return fetch(`${FEATURE_LAYER_URL}/query?${params.toString()}`);
+      })
       .then((res) => res.json() as Promise<ArcGISResponse>)
       .then((data) => {
         if (data.error) throw new Error(data.error.message);
