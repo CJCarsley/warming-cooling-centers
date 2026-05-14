@@ -155,7 +155,7 @@ const TABLE_LITERAL = 'FacilityOverrides';
 for (const [fn, actions] of [
   [getKeepOpenFn, ['dynamodb:BatchGetItem', 'dynamodb:GetItem']],
   [updateKeepOpenFn, ['dynamodb:UpdateItem']],
-  [autoResetFn, ['dynamodb:GetItem']],
+  [autoResetFn, ['dynamodb:Scan']],
   [updateStatusFn, ['dynamodb:GetItem']],
   [getFacilityNotificationsFn, ['dynamodb:GetItem']],
   [setFacilityNotificationsFn, ['dynamodb:UpdateItem']],

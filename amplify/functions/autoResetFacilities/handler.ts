@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
 
 const TABLE_NAME = process.env.TABLE_NAME!;
 const ARCGIS_CLIENT_ID = process.env.ARCGIS_CLIENT_ID!;
@@ -72,25 +72,32 @@ export const handler = async (): Promise<void> => {
     return;
   }
 
-  // Check each facility for a keep-open override
+  // Fetch all keepOpen overrides in one Scan, then build a Set for O(1) lookup
+  let keepOpenIds = new Set<string>();
+  try {
+    const scanResult = await ddb.send(
+      new ScanCommand({
+        TableName: TABLE_NAME,
+        FilterExpression: 'keepOpen = :t',
+        ExpressionAttributeValues: { ':t': true },
+        ProjectionExpression: 'facilityId',
+        ConsistentRead: true,
+      }),
+    );
+    keepOpenIds = new Set((scanResult.Items ?? []).map((item) => String(item.facilityId)));
+    console.log(`keepOpen overrides active: [${[...keepOpenIds].join(', ') || 'none'}]`);
+  } catch (err) {
+    console.error('DynamoDB Scan failed; proceeding without keepOpen data (fail-safe — no facilities will be reset):', err);
+    return;
+  }
+
   const toReset: number[] = [];
   for (const feature of activeFacilities) {
     const id = feature.attributes.ObjectID;
-    try {
-      const result = await ddb.send(
-        new GetCommand({
-          TableName: TABLE_NAME,
-          Key: { facilityId: String(id) },
-          ConsistentRead: true,
-        }),
-      );
-      if (!result.Item?.keepOpen) {
-        toReset.push(id);
-      } else {
-        console.log(`Facility ${id} has keep-open override; skipping`);
-      }
-    } catch (err) {
-      console.error(`DynamoDB GetItem failed for facility ${id}; skipping reset (fail-safe):`, err);
+    if (keepOpenIds.has(String(id))) {
+      console.log(`Facility ${id} has keep-open override; skipping`);
+    } else {
+      toReset.push(id);
     }
   }
 
