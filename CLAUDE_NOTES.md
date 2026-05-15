@@ -424,6 +424,65 @@ Lambda (different function ARN).
 calls from AdminPanel are not reaching DynamoDB; investigate `updateKeepOpen` Lambda next
 (IAM `UpdateItem` permission, `TABLE_NAME` env var, CloudWatch errors).
 
+### feature/edit-assignments-fix — PR pending (pushed 2026-05-15)
+
+**Fix 1 — Facility assignments list empty in User Management modal:**
+- After `feature/proxy` made the feature layer private, `getUsersAndFacilities` was still
+  querying ArcGIS without a token, so `data.facilities` came back empty. Modal showed only
+  the search box; the underlying list it filters was empty.
+- Fix (`amplify/functions/getUsersAndFacilities/`): import `getArcGISToken` from
+  `../shared/arcgisToken`, add `ARCGIS_CLIENT_ID` / `ARCGIS_CLIENT_SECRET` secrets to
+  `resource.ts` env, include `token` in the `/query` params.
+
+**Delete user (cjcarsley only):**
+- New Lambda `deleteUser` (POST `/admin/users/delete`). Caller email must equal
+  `cjcarsley@douglascounty-ne.gov` (claims-based, server-enforced).
+- Pre-checks via `AdminGetUser` + `AdminListGroupsForUser`: blocks self-delete (target email
+  matching PROTECTED_EMAIL) and any SuperAdmin target. Calls `AdminDeleteUserCommand`.
+- IAM: `cognito-idp:AdminDeleteUser`, `AdminGetUser`, `AdminListGroupsForUser` on userPoolArn.
+- UI (`UserManagementPanel.tsx`): red Delete button per row, **only rendered when
+  `userEmail === PROTECTED_EMAIL`** and target is neither cjcarsley nor SuperAdmin. Confirms
+  via native `<dialog>` modal before firing.
+
+**Request Access flow — gate Add New behind admin approval:**
+- New Cognito groups: `Approved`, `PendingApproval` (added to `defineAuth.groups`).
+- New `postConfirmation` Lambda wired via `defineAuth.triggers.postConfirmation` — auto-adds
+  newly-confirmed users to `PendingApproval` unless they're already in
+  SuperAdmin/Admin/Approved (idempotency guard via `AdminListGroupsForUser`).
+- New Lambda `requestAccess` (POST `/admin/request-access`, Cognito-authorized):
+  queries `ListUsersInGroup` for both `Admin` and `SuperAdmin`, sends one SES email with
+  combined recipient list (excluding the requester). Env: `SES_FROM_EMAIL=do-not-reply@dcgis.org`,
+  `SES_REGION=us-east-1`, `APP_URL` (deep link to `/admin/users` in the body).
+- `manageUserRole/handler.ts`: `MANAGEABLE_GROUPS = ['Admin', 'Approved', 'PendingApproval']`
+  (was Admin-only). Approve action calls it twice: add `Approved`, then remove `PendingApproval`.
+- `getUsersAndFacilities`: now returns all 4 group memberships per user. Wrapped each
+  `ListUsersInGroup` call in `listGroupSafe` so a missing group returns empty rather than
+  failing the whole request — necessary because old environments may not yet have the new
+  groups when this Lambda first runs.
+- Client (`useAuthGroups.ts`): adds `isApproved`, `isPending` to the return value.
+- AdminPanel: `canAddFacility = isSuperAdmin || isAdmin || isApproved`. If false and
+  `isPending`, renders Request Access button instead of Add New. After click, the button
+  shows "Request Sent" and stays disabled — `sessionStorage` key `wcc.requestAccessSent`
+  persists across remounts within the tab.
+- UserManagementPanel: amber `pendingBadge` next to email for PendingApproval users; green
+  Approve button (visible only when target is in PendingApproval) that performs the two-step
+  group swap.
+
+**Why PendingApproval as a Cognito group (not a DynamoDB request table):**
+- Single source of truth lives in Cognito. `getUsersAndFacilities` already enumerates groups
+  per user, so the User Management UI sees pending users automatically with no extra fetch.
+- No DynamoDB table to maintain. Approval is a Cognito-only operation.
+- Tradeoff accepted: no audit trail of who requested vs. who was approved when. Acceptable
+  for this scale (<100 users).
+
+**Notes on deploy / pre-existing users:**
+- Existing users who never sign up again (already CONFIRMED) won't run through the new
+  `postConfirmation` trigger — they keep their current group state. If they were group-less
+  before, they remain group-less after deploy → AdminPanel will show neither Add New nor
+  Request Access (both conditions are false). Manually add them to `Approved` (for active
+  facility admins) via Cognito console after the deploy if needed.
+- cjcarsley is in SuperAdmin → unaffected.
+
 ---
 
 ## Git Workflow Notes
