@@ -174,6 +174,9 @@ export default function UserManagementPanel({
     new Set(),
   );
   const [pendingRoleChange, setPendingRoleChange] = useState<Set<string>>(new Set());
+  const [pendingApproval, setPendingApproval] = useState<Set<string>>(new Set());
+  const [pendingDelete, setPendingDelete] = useState<Set<string>>(new Set());
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<CognitoUser | null>(null);
   // Tracks live facility_ids per username (overrides initial data after changes)
   const [overrideFacilityIds, setOverrideFacilityIds] = useState<
     Map<string, string>
@@ -182,6 +185,7 @@ export default function UserManagementPanel({
 
   // ── Refs ────────────────────────────────────────────────────────────────────
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const confirmDialogRef = useRef<HTMLDialogElement>(null);
   const editBtnRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const facilitySearchRef = useRef<HTMLInputElement>(null);
 
@@ -327,6 +331,96 @@ export default function UserManagementPanel({
     },
     [facilities, addToast, t],
   );
+
+  // ── Approve pending user ────────────────────────────────────────────────────
+  const handleApprove = useCallback(
+    async (user: CognitoUser) => {
+      setPendingApproval((prev) => new Set(prev).add(user.username));
+      try {
+        const session = await fetchAuthSession();
+        const token = session.tokens?.idToken?.toString() ?? '';
+        const callRole = (group: string, action: 'add' | 'remove') =>
+          fetch(`${apiBase}admin/users/role`, {
+            method: 'POST',
+            headers: { Authorization: token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetUsername: user.username, action, group }),
+          });
+
+        const addRes = await callRole('Approved', 'add');
+        if (!addRes.ok) throw new Error(`add Approved HTTP ${addRes.status}`);
+        const removeRes = await callRole('PendingApproval', 'remove');
+        if (!removeRes.ok) throw new Error(`remove PendingApproval HTTP ${removeRes.status}`);
+
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.username === user.username
+              ? {
+                  ...u,
+                  groups: [
+                    ...u.groups.filter((g) => g !== 'PendingApproval'),
+                    'Approved',
+                  ],
+                }
+              : u,
+          ),
+        );
+        addToast('success', t('admin.users.approveSuccess', { email: user.email }));
+      } catch (err) {
+        console.error('approve error:', err);
+        addToast('error', t('admin.users.approveError'));
+      } finally {
+        setPendingApproval((prev) => {
+          const next = new Set(prev);
+          next.delete(user.username);
+          return next;
+        });
+      }
+    },
+    [addToast, t],
+  );
+
+  // ── Delete user (PROTECTED_EMAIL only) ─────────────────────────────────────
+  const requestDelete = useCallback((user: CognitoUser) => {
+    setConfirmDeleteUser(user);
+    requestAnimationFrame(() => confirmDialogRef.current?.showModal());
+  }, []);
+
+  const cancelDelete = useCallback(() => {
+    confirmDialogRef.current?.close();
+    setConfirmDeleteUser(null);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!confirmDeleteUser) return;
+    const target = confirmDeleteUser;
+    setPendingDelete((prev) => new Set(prev).add(target.username));
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens?.idToken?.toString() ?? '';
+      const res = await fetch(`${apiBase}admin/users/delete`, {
+        method: 'POST',
+        headers: { Authorization: token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUsername: target.username }),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        console.error('delete user failed:', res.status, errText);
+        throw new Error(`HTTP ${res.status}`);
+      }
+      setUsers((prev) => prev.filter((u) => u.username !== target.username));
+      addToast('success', t('admin.users.deleteSuccess', { email: target.email }));
+      confirmDialogRef.current?.close();
+      setConfirmDeleteUser(null);
+    } catch {
+      addToast('error', t('admin.users.deleteError'));
+    } finally {
+      setPendingDelete((prev) => {
+        const next = new Set(prev);
+        next.delete(target.username);
+        return next;
+      });
+    }
+  }, [confirmDeleteUser, addToast, t]);
 
   // ── Admin role toggle ──────────────────────────────────────────────────────
   const handleRoleToggle = useCallback(
@@ -483,6 +577,11 @@ export default function UserManagementPanel({
                             {t('admin.users.adminBadge')}
                           </span>
                         )}
+                        {user.groups.includes('PendingApproval') && (
+                          <span className={styles.pendingBadge} aria-label={t('admin.users.pendingBadge')}>
+                            {t('admin.users.pendingBadge')}
+                          </span>
+                        )}
                       </td>
                       <td>
                         <StatusBadge status={user.status} />
@@ -506,6 +605,19 @@ export default function UserManagementPanel({
                           >
                             {t('admin.users.editAssignments')}
                           </button>
+                          {user.groups.includes('PendingApproval') && (
+                            <button
+                              type="button"
+                              className={styles.approveBtn}
+                              onClick={() => void handleApprove(user)}
+                              disabled={pendingApproval.has(user.username)}
+                              aria-label={t('admin.users.approveAria', { email: user.email })}
+                            >
+                              {pendingApproval.has(user.username)
+                                ? '…'
+                                : t('admin.users.approve')}
+                            </button>
+                          )}
                           {!user.groups.includes('SuperAdmin') && (
                             <button
                               type="button"
@@ -535,6 +647,21 @@ export default function UserManagementPanel({
                                   : t('admin.users.grantAdmin')}
                             </button>
                           )}
+                          {userEmail === PROTECTED_EMAIL &&
+                            user.email !== PROTECTED_EMAIL &&
+                            !user.groups.includes('SuperAdmin') && (
+                              <button
+                                type="button"
+                                className={styles.deleteBtn}
+                                onClick={() => requestDelete(user)}
+                                disabled={pendingDelete.has(user.username)}
+                                aria-label={t('admin.users.deleteUserAria', { email: user.email })}
+                              >
+                                {pendingDelete.has(user.username)
+                                  ? '…'
+                                  : t('admin.users.deleteUser')}
+                              </button>
+                            )}
                         </div>
                       </td>
                     </tr>
@@ -650,6 +777,43 @@ export default function UserManagementPanel({
               })}
             </ul>
           </>
+        )}
+      </dialog>
+
+      <dialog
+        ref={confirmDialogRef}
+        className={styles.confirmDialog}
+        aria-labelledby="confirm-delete-title"
+      >
+        {confirmDeleteUser && (
+          <div className={styles.confirmInner}>
+            <h2 id="confirm-delete-title" className={styles.confirmTitle}>
+              {t('admin.users.deleteConfirmTitle')}
+            </h2>
+            <p className={styles.confirmBody}>
+              {t('admin.users.deleteConfirmBody', { email: confirmDeleteUser.email })}
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                type="button"
+                className={styles.confirmCancelBtn}
+                onClick={cancelDelete}
+                disabled={pendingDelete.has(confirmDeleteUser.username)}
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                className={styles.confirmDeleteBtn}
+                onClick={() => void confirmDelete()}
+                disabled={pendingDelete.has(confirmDeleteUser.username)}
+              >
+                {pendingDelete.has(confirmDeleteUser.username)
+                  ? '…'
+                  : t('admin.users.deleteUser')}
+              </button>
+            </div>
+          </div>
         )}
       </dialog>
     </div>

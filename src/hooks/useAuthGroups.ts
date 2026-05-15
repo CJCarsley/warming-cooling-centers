@@ -5,6 +5,8 @@ export function useAuthGroups(): {
   groups: string[];
   isSuperAdmin: boolean;
   isAdmin: boolean;
+  isApproved: boolean;
+  isPending: boolean;
   isLoading: boolean;
 } {
   const [groups, setGroups] = useState<string[]>([]);
@@ -35,6 +37,8 @@ export function useAuthGroups(): {
     groups,
     isSuperAdmin: groups.includes('SuperAdmin'),
     isAdmin: groups.includes('Admin'),
+    isApproved: groups.includes('Approved'),
+    isPending: groups.includes('PendingApproval'),
     isLoading,
   };
 }

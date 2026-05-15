@@ -48,9 +48,20 @@ interface AdminPanelProps {
   userEmail: string;
   isSuperAdmin?: boolean;
   isAdmin?: boolean;
+  isApproved?: boolean;
+  isPending?: boolean;
 }
 
-export default function AdminPanel({ signOut, userEmail, isSuperAdmin, isAdmin }: AdminPanelProps) {
+const REQUEST_ACCESS_KEY = 'wcc.requestAccessSent';
+
+export default function AdminPanel({
+  signOut,
+  userEmail,
+  isSuperAdmin,
+  isAdmin,
+  isApproved,
+  isPending,
+}: AdminPanelProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const wasUnauthorized = (location.state as { unauthorized?: boolean })?.unauthorized;
@@ -66,6 +77,42 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin, isAdmin }
   const [keepOpenPendingIds, setKeepOpenPendingIds] = useState<Set<number>>(new Set());
   const [announcement, setAnnouncement] = useState('');
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [requestAccessSent, setRequestAccessSent] = useState(() => {
+    try {
+      return sessionStorage.getItem(REQUEST_ACCESS_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const [requestAccessPending, setRequestAccessPending] = useState(false);
+
+  const canAddFacility = Boolean(isSuperAdmin || isAdmin || isApproved);
+  const showRequestAccess = !canAddFacility && Boolean(isPending);
+
+  const handleRequestAccess = useCallback(async () => {
+    setRequestAccessPending(true);
+    try {
+      const session = await fetchAuthSession();
+      const tok = session.tokens?.idToken?.toString() ?? '';
+      const res = await fetch(`${resolvedApiBase}admin/request-access`, {
+        method: 'POST',
+        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      try {
+        sessionStorage.setItem(REQUEST_ACCESS_KEY, '1');
+      } catch {
+        /* sessionStorage unavailable; soft-degrade */
+      }
+      setRequestAccessSent(true);
+      setAnnouncement(t('admin.requestAccess.sent'));
+    } catch (err) {
+      console.error('requestAccess error:', err);
+      setAnnouncement(t('admin.requestAccess.error'));
+    } finally {
+      setRequestAccessPending(false);
+    }
+  }, [t]);
 
   // Notifications-in-place state
   const [notifExpandedId, setNotifExpandedId] = useState<number | null>(null);
@@ -559,15 +606,31 @@ export default function AdminPanel({ signOut, userEmail, isSuperAdmin, isAdmin }
           <h2 id="facilities-heading" className={styles.sectionHeading}>
             {t('admin.panel.facilities')}
           </h2>
-          <button
-            ref={addNewBtnRef}
-            type="button"
-            className={styles.addNewBtn}
-            onClick={() => setAddModalOpen(true)}
-            aria-label={t('admin.addFacility.buttonAriaLabel')}
-          >
-            {t('admin.addFacility.buttonLabel')}
-          </button>
+          {canAddFacility ? (
+            <button
+              ref={addNewBtnRef}
+              type="button"
+              className={styles.addNewBtn}
+              onClick={() => setAddModalOpen(true)}
+              aria-label={t('admin.addFacility.buttonAriaLabel')}
+            >
+              {t('admin.addFacility.buttonLabel')}
+            </button>
+          ) : showRequestAccess ? (
+            <button
+              type="button"
+              className={styles.addNewBtn}
+              onClick={() => void handleRequestAccess()}
+              disabled={requestAccessPending || requestAccessSent}
+              aria-label={t('admin.requestAccess.buttonAriaLabel')}
+            >
+              {requestAccessSent
+                ? t('admin.requestAccess.sentLabel')
+                : requestAccessPending
+                  ? t('admin.requestAccess.sending')
+                  : t('admin.requestAccess.buttonLabel')}
+            </button>
+          ) : null}
         </div>
 
         {isLoading && (

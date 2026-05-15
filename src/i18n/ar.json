@@ -87,7 +87,8 @@
   "common": {
     "notAvailable": "غير متوفر",
     "loading": "جارٍ التحميل…",
-    "error": "حدث خطأ. يرجى المحاولة مرة أخرى."
+    "error": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+    "cancel": "إلغاء"
   },
   "aria": {
     "externalLink": "يفتح في نافذة جديدة"
@@ -163,6 +164,24 @@
       "saveError": "Failed to save notification emails. Please try again.",
       "loading": "Loading notification settings…",
       "loadError": "Failed to load notification settings. Please try again."
+    },
+    "users": {
+      "pendingBadge": "قيد الانتظار",
+      "approve": "موافقة",
+      "approveSuccess": "تمت الموافقة على وصول {{email}}",
+      "approveError": "فشل الموافقة على الوصول. يرجى المحاولة مرة أخرى.",
+      "deleteUser": "حذف",
+      "deleteConfirmTitle": "حذف المستخدم؟",
+      "deleteConfirmBody": "حذف {{email}} نهائياً؟ لا يمكن التراجع عن هذا الإجراء.",
+      "deleteSuccess": "تم حذف {{email}}",
+      "deleteError": "فشل حذف المستخدم. يرجى المحاولة مرة أخرى."
+    },
+    "requestAccess": {
+      "buttonLabel": "طلب الوصول",
+      "sending": "جارٍ الإرسال…",
+      "sentLabel": "تم إرسال الطلب",
+      "sent": "تم إرسال طلب الوصول. في انتظار الموافقة.",
+      "error": "فشل إرسال طلب الوصول. يرجى المحاولة مرة أخرى."
     }
   }
 }
