@@ -124,6 +124,14 @@ dep: custom stack → Lambda stack. That is fine. These create cycles:
    with that name. DynamoDB names are account/region-scoped → conflict. Fix: either omit `tableName`
    (auto-generate, unique per stack) or manage the table outside CDK and reference by hardcoded name.
 
+5. **`defineAuth({ triggers: { <fn> } })` with the trigger Lambda in its own stack** — wiring a
+   function as a Cognito auth trigger makes the auth stack import the function ARN, AND Amplify
+   auto-generates a `CfnPermission` inside the function's stack with `sourceArn = userPoolArn`
+   (cycle-closing import that is unreachable from `backend.ts`). Pattern 2 is not enough here —
+   even with a clean IAM policy the auto-generated permission keeps the cycle. Fix: set
+   `resourceGroupName: 'auth'` on the trigger function's `defineFunction` so it lives in the
+   auth nested stack — LambdaConfig + CfnPermission both intra-stack, no cross-stack import.
+
 ---
 
 ## Lambda Functions
@@ -420,9 +428,31 @@ Lambda (different function ARN).
   whose keepOpen status is unknown
 - IAM permission updated from `dynamodb:GetItem` → `dynamodb:Scan` for `autoResetFn`
 
-**If reset still fires**: Check CloudWatch for `keepOpen overrides active: [none]` — means PATCH
-calls from AdminPanel are not reaching DynamoDB; investigate `updateKeepOpen` Lambda next
-(IAM `UpdateItem` permission, `TABLE_NAME` env var, CloudWatch errors).
+**If reset still fires** (historical guidance, kept for the diagnostic flow): Check CloudWatch
+for `keepOpen overrides active: [none]` — that would mean PATCH calls from AdminPanel are not
+reaching DynamoDB; investigate `updateKeepOpen` Lambda next.
+
+### root cause: external ArcGIS Notebook (discovered 2026-05-18)
+
+Even after the Scan refactor + log line, Keep Open overrides were still ignored. The CloudWatch
+log query showed master's autoResetFacilities Lambda fired at 06:00 UTC and reported
+`No active facilities to reset` — meaning Warming/Cooling were ALREADY 'No' in ArcGIS before
+the cron ran. Plus Keep Open was still checked in the UI (so updateStatus didn't clear it).
+
+A pre-existing ArcGIS Online Notebook (set up by cjcarsley long before this codebase existed)
+runs its own scheduled nightly reset against the Warming_and_Cooling_Centers feature layer.
+It writes directly via applyEdits and does NOT consult the FacilityOverrides table, so it has
+no notion of Keep Open. Its schedule fires before Amplify's cron, so by the time the Lambda
+runs every feature is already 'No'.
+
+**Fix**: Notebook schedule disabled in ArcGIS Online (2026-05-18). Amplify's
+`autoResetFacilities` is now the sole nightly reset path. No code change required.
+
+**Audit lesson**: When a "ghost" mutation appears on the feature layer with no matching Lambda
+CloudWatch entry, look at ArcGIS-side automation surfaces (Notebooks, Webhooks, GeoEvent)
+before chasing a code bug. The diagnostic that nailed it: `EditDate` + `Editor` fields on the
+feature layer (`outFields=EditDate,Editor`) show exactly when and by what identity each row
+was last changed.
 
 ### feature/edit-assignments-fix — PR pending (pushed 2026-05-15)
 
@@ -482,6 +512,23 @@ calls from AdminPanel are not reaching DynamoDB; investigate `updateKeepOpen` La
   Request Access (both conditions are false). Manually add them to `Approved` (for active
   facility admins) via Cognito console after the deploy if needed.
 - cjcarsley is in SuperAdmin → unaffected.
+
+**Deployment fix (2026-05-18, commits f513064 + 651d7e5):**
+- First deploy attempt failed with `CloudformationStackCircularDependencyError` between
+  `auth`, `FacilityStatusApiStack`, and the postConfirmation function stack.
+- Root cause: `defineAuth.triggers.postConfirmation` makes the auth stack import the function
+  ARN. Amplify ALSO auto-generates a `CfnPermission` inside the function's stack with
+  `sourceArn = userPoolArn` so Cognito can invoke it — that import alone closes the cycle and
+  is invisible from `backend.ts`.
+- f513064 (didn't resolve it): rewrote our own IAM policy on postConfirmation to use
+  `Stack.of(fn).formatArn({ resource: 'userpool', resourceName: '*' })` instead of
+  `userPoolArn`. Treated this like circular-dep pattern 2 — but pattern 2 only covers cycles
+  we create ourselves; here Amplify's auto-generated CfnPermission was the real edge.
+- 651d7e5 (working fix): set `resourceGroupName: 'auth'` on postConfirmation's `defineFunction`.
+  Places the Lambda IN the auth nested stack so both the LambdaConfig and the auto-generated
+  CfnPermission are intra-stack. The wildcard IAM from f513064 is kept; it's harmless and
+  matches the rest of the codebase's pattern-2 style.
+- New rule: any `defineAuth.triggers.*` function MUST also set `resourceGroupName: 'auth'`.
 
 ---
 
