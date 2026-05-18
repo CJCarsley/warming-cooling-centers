@@ -87,7 +87,8 @@
   "common": {
     "notAvailable": "Không có thông tin",
     "loading": "Đang tải…",
-    "error": "Đã xảy ra lỗi. Vui lòng thử lại."
+    "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "cancel": "Hủy"
   },
   "aria": {
     "externalLink": "Mở trong tab mới"
@@ -163,6 +164,24 @@
       "saveError": "Failed to save notification emails. Please try again.",
       "loading": "Loading notification settings…",
       "loadError": "Failed to load notification settings. Please try again."
+    },
+    "users": {
+      "pendingBadge": "Đang chờ",
+      "approve": "Phê duyệt",
+      "approveSuccess": "Đã phê duyệt quyền truy cập cho {{email}}",
+      "approveError": "Không thể phê duyệt quyền truy cập. Vui lòng thử lại.",
+      "deleteUser": "Xóa",
+      "deleteConfirmTitle": "Xóa người dùng?",
+      "deleteConfirmBody": "Xóa vĩnh viễn {{email}}? Hành động này không thể hoàn tác.",
+      "deleteSuccess": "Đã xóa {{email}}",
+      "deleteError": "Không thể xóa người dùng. Vui lòng thử lại."
+    },
+    "requestAccess": {
+      "buttonLabel": "Yêu cầu truy cập",
+      "sending": "Đang gửi…",
+      "sentLabel": "Đã gửi yêu cầu",
+      "sent": "Đã gửi yêu cầu truy cập. Đang chờ phê duyệt.",
+      "error": "Không thể gửi yêu cầu truy cập. Vui lòng thử lại."
     }
   }
 }

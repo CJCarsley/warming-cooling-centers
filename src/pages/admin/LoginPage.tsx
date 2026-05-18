@@ -39,7 +39,7 @@ function AuthenticatedArea({
   userEmail,
   isUsersRoute,
 }: AuthenticatedAreaProps) {
-  const { isSuperAdmin, isAdmin, isLoading } = useAuthGroups();
+  const { isSuperAdmin, isAdmin, isApproved, isPending, isLoading } = useAuthGroups();
   const navigate = useNavigate();
   const canManageUsers = isSuperAdmin || isAdmin;
 
@@ -63,6 +63,8 @@ function AuthenticatedArea({
       userEmail={userEmail}
       isSuperAdmin={isSuperAdmin}
       isAdmin={isAdmin}
+      isApproved={isApproved}
+      isPending={isPending}
     />
   );
 }

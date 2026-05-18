@@ -28,6 +28,9 @@ import { setFacilityNotifications } from './functions/setFacilityNotifications/r
 import { deleteFacility } from './functions/deleteFacility/resource';
 import { manageUserRole } from './functions/manageUserRole/resource';
 import { getArcGISPublicToken } from './functions/getArcGISPublicToken/resource';
+import { postConfirmation } from './functions/postConfirmation/resource';
+import { requestAccess } from './functions/requestAccess/resource';
+import { deleteUser } from './functions/deleteUser/resource';
 
 const backend = defineBackend({
   auth,
@@ -44,6 +47,9 @@ const backend = defineBackend({
   deleteFacility,
   manageUserRole,
   getArcGISPublicToken,
+  postConfirmation,
+  requestAccess,
+  deleteUser,
 });
 
 // Password policy via CDK override (not exposed in defineAuth API)
@@ -79,6 +85,9 @@ const getFacilityNotificationsFn = backend.getFacilityNotifications.resources.la
 const setFacilityNotificationsFn = backend.setFacilityNotifications.resources.lambda as LambdaFunction;
 const deleteFacilityFn = backend.deleteFacility.resources.lambda as LambdaFunction;
 const manageUserRoleFn = backend.manageUserRole.resources.lambda as LambdaFunction;
+const postConfirmationFn = backend.postConfirmation.resources.lambda as LambdaFunction;
+const requestAccessFn = backend.requestAccess.resources.lambda as LambdaFunction;
+const deleteUserFn = backend.deleteUser.resources.lambda as LambdaFunction;
 
 updateStatusFn.addToRolePolicy(
   new PolicyStatement({
@@ -93,6 +102,8 @@ updateFacilitiesFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 addFacilityFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 deleteFacilityFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 manageUserRoleFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
+requestAccessFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
+deleteUserFn.addEnvironment('USER_POOL_ID', userPool.userPoolId);
 
 getUsersFn.addToRolePolicy(
   new PolicyStatement({
@@ -109,6 +120,54 @@ manageUserRoleFn.addToRolePolicy(
       'cognito-idp:AdminGetUser',
       'cognito-idp:AdminAddUserToGroup',
       'cognito-idp:AdminRemoveUserFromGroup',
+    ],
+    resources: [userPoolArn],
+  }),
+);
+
+// Pseudo-param ARN (not userPoolArn token) — postConfirmation is an auth trigger,
+// so auth stack already depends on this Lambda's stack. Referencing userPoolArn here
+// would close the cycle. Wildcard scope is harmless: the Lambda only runs in response
+// to its own pool's trigger and calls these APIs with event.userPoolId from that event.
+postConfirmationFn.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: [
+      'cognito-idp:AdminAddUserToGroup',
+      'cognito-idp:AdminListGroupsForUser',
+    ],
+    resources: [
+      Stack.of(postConfirmationFn).formatArn({
+        service: 'cognito-idp',
+        resource: 'userpool',
+        resourceName: '*',
+      }),
+    ],
+  }),
+);
+
+requestAccessFn.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['cognito-idp:ListUsersInGroup'],
+    resources: [userPoolArn],
+  }),
+);
+requestAccessFn.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['ses:SendEmail'],
+    resources: ['*'],
+  }),
+);
+
+deleteUserFn.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: [
+      'cognito-idp:AdminDeleteUser',
+      'cognito-idp:AdminGetUser',
+      'cognito-idp:AdminListGroupsForUser',
     ],
     resources: [userPoolArn],
   }),
@@ -263,7 +322,8 @@ facilityResource
 
 // GET /admin/users — list all users + live facility data
 // PATCH /admin/users/facilities — add/remove a facility assignment
-const usersResource = api.root.addResource('admin').addResource('users');
+const adminResource = api.root.addResource('admin');
+const usersResource = adminResource.addResource('users');
 
 usersResource.addMethod(
   'GET',
@@ -284,6 +344,22 @@ usersResource
   .addMethod(
     'POST',
     new LambdaIntegration(backend.manageUserRole.resources.lambda),
+    { authorizer },
+  );
+
+usersResource
+  .addResource('delete')
+  .addMethod(
+    'POST',
+    new LambdaIntegration(backend.deleteUser.resources.lambda),
+    { authorizer },
+  );
+
+adminResource
+  .addResource('request-access')
+  .addMethod(
+    'POST',
+    new LambdaIntegration(backend.requestAccess.resources.lambda),
     { authorizer },
   );
 

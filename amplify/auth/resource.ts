@@ -1,4 +1,5 @@
 import { defineAuth } from '@aws-amplify/backend';
+import { postConfirmation } from '../functions/postConfirmation/resource';
 
 export const auth = defineAuth({
   loginWith: {
@@ -8,11 +9,14 @@ export const auth = defineAuth({
     mode: 'OPTIONAL',
     totp: true,
   },
-  groups: ['SuperAdmin', 'Admin'],
+  groups: ['SuperAdmin', 'Admin', 'Approved', 'PendingApproval'],
   userAttributes: {
     'custom:facility_ids': {
       dataType: 'String',
       mutable: true,
     },
+  },
+  triggers: {
+    postConfirmation,
   },
 });

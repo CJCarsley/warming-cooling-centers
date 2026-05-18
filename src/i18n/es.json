@@ -87,7 +87,8 @@
   "common": {
     "notAvailable": "No disponible",
     "loading": "Cargando…",
-    "error": "Ocurrió un error. Por favor, inténtelo de nuevo."
+    "error": "Ocurrió un error. Por favor, inténtelo de nuevo.",
+    "cancel": "Cancelar"
   },
   "aria": {
     "externalLink": "Se abre en una nueva pestaña"
@@ -173,7 +174,26 @@
       "removeAdminAria": "Quitar rol de Admin a {{email}}",
       "roleGrantSuccess": "Rol de Admin otorgado a {{email}}",
       "roleRemoveSuccess": "Rol de Admin quitado de {{email}}",
-      "roleError": "Error al actualizar el rol. Por favor, inténtelo de nuevo."
+      "roleError": "Error al actualizar el rol. Por favor, inténtelo de nuevo.",
+      "pendingBadge": "Pendiente",
+      "approve": "Aprobar",
+      "approveAria": "Aprobar acceso para {{email}}",
+      "approveSuccess": "Acceso aprobado para {{email}}",
+      "approveError": "Error al aprobar el acceso. Por favor, inténtelo de nuevo.",
+      "deleteUser": "Eliminar",
+      "deleteUserAria": "Eliminar usuario {{email}}",
+      "deleteConfirmTitle": "¿Eliminar usuario?",
+      "deleteConfirmBody": "¿Eliminar permanentemente a {{email}}? Esta acción no se puede deshacer.",
+      "deleteSuccess": "Eliminado {{email}}",
+      "deleteError": "Error al eliminar el usuario. Por favor, inténtelo de nuevo."
+    },
+    "requestAccess": {
+      "buttonLabel": "Solicitar acceso",
+      "buttonAriaLabel": "Solicitar acceso para administrar centros",
+      "sending": "Enviando…",
+      "sentLabel": "Solicitud enviada",
+      "sent": "Solicitud de acceso enviada. Esperando aprobación.",
+      "error": "Error al enviar la solicitud de acceso. Por favor, inténtelo de nuevo."
     },
     "addFacility": {
       "buttonLabel": "+ Agregar Nuevo",

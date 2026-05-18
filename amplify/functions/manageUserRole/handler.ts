@@ -80,7 +80,8 @@ export const handler = async (
     };
   }
 
-  if (group !== 'Admin') {
+  const MANAGEABLE_GROUPS = ['Admin', 'Approved', 'PendingApproval'];
+  if (!MANAGEABLE_GROUPS.includes(group)) {
     return {
       statusCode: 403,
       headers: CORS_HEADERS,

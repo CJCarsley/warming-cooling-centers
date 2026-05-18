@@ -350,6 +350,131 @@
   outline-offset: 2px;
 }
 
+.pendingBadge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 10px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #fff3cd;
+  color: #7a5d00;
+}
+
+.approveBtn {
+  padding: 0.35rem 0.75rem;
+  min-height: 36px;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  background: #2e7d32;
+  color: #fff;
+  border: 1px solid #2e7d32;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.approveBtn:hover { background: #1b5e20; }
+
+.deleteBtn {
+  padding: 0.35rem 0.75rem;
+  min-height: 36px;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  background: var(--color-surface);
+  color: var(--color-capacity-full);
+  border: 1px solid var(--color-capacity-full);
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.deleteBtn:hover {
+  background: var(--color-capacity-full);
+  color: #fff;
+}
+
+.approveBtn:disabled,
+.deleteBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.approveBtn:focus-visible,
+.deleteBtn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.confirmDialog {
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  max-width: 420px;
+  width: 92%;
+  background: var(--color-surface);
+}
+
+.confirmDialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.confirmInner {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.confirmTitle {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.confirmBody {
+  font-size: 0.9375rem;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.confirmCancelBtn {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.confirmDeleteBtn {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--color-capacity-full);
+  background: var(--color-capacity-full);
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.confirmDeleteBtn:disabled,
+.confirmCancelBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ── Skeleton rows ────────────────────────────────────────────────────────── */
 
 @keyframes shimmer {

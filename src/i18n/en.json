@@ -88,7 +88,8 @@
   "common": {
     "notAvailable": "Not available",
     "loading": "Loading…",
-    "error": "An error occurred. Please try again."
+    "error": "An error occurred. Please try again.",
+    "cancel": "Cancel"
   },
   "aria": {
     "externalLink": "Opens in a new tab"
@@ -174,7 +175,26 @@
       "removeAdminAria": "Remove Admin role from {{email}}",
       "roleGrantSuccess": "Admin role granted to {{email}}",
       "roleRemoveSuccess": "Admin role removed from {{email}}",
-      "roleError": "Failed to update role. Please try again."
+      "roleError": "Failed to update role. Please try again.",
+      "pendingBadge": "Pending",
+      "approve": "Approve",
+      "approveAria": "Approve access for {{email}}",
+      "approveSuccess": "Access approved for {{email}}",
+      "approveError": "Failed to approve access. Please try again.",
+      "deleteUser": "Delete",
+      "deleteUserAria": "Delete user {{email}}",
+      "deleteConfirmTitle": "Delete user?",
+      "deleteConfirmBody": "Permanently delete {{email}}? This cannot be undone.",
+      "deleteSuccess": "Deleted {{email}}",
+      "deleteError": "Failed to delete user. Please try again."
+    },
+    "requestAccess": {
+      "buttonLabel": "Request Access",
+      "buttonAriaLabel": "Request access to manage facilities",
+      "sending": "Sending…",
+      "sentLabel": "Request Sent",
+      "sent": "Access request sent. Awaiting approval.",
+      "error": "Failed to send access request. Please try again."
     },
     "addFacility": {
       "buttonLabel": "+ Add New",
