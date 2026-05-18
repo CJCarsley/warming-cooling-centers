@@ -125,6 +125,10 @@ manageUserRoleFn.addToRolePolicy(
   }),
 );
 
+// Pseudo-param ARN (not userPoolArn token) — postConfirmation is an auth trigger,
+// so auth stack already depends on this Lambda's stack. Referencing userPoolArn here
+// would close the cycle. Wildcard scope is harmless: the Lambda only runs in response
+// to its own pool's trigger and calls these APIs with event.userPoolId from that event.
 postConfirmationFn.addToRolePolicy(
   new PolicyStatement({
     effect: Effect.ALLOW,
@@ -132,7 +136,13 @@ postConfirmationFn.addToRolePolicy(
       'cognito-idp:AdminAddUserToGroup',
       'cognito-idp:AdminListGroupsForUser',
     ],
-    resources: [userPoolArn],
+    resources: [
+      Stack.of(postConfirmationFn).formatArn({
+        service: 'cognito-idp',
+        resource: 'userpool',
+        resourceName: '*',
+      }),
+    ],
   }),
 );
 
