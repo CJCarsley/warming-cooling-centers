@@ -454,7 +454,7 @@ before chasing a code bug. The diagnostic that nailed it: `EditDate` + `Editor` 
 feature layer (`outFields=EditDate,Editor`) show exactly when and by what identity each row
 was last changed.
 
-### feature/edit-assignments-fix — PR pending (pushed 2026-05-15)
+### feature/edit-assignments-fix — merged (PRs #23 and #24 — 2026-05-18)
 
 **Fix 1 — Facility assignments list empty in User Management modal:**
 - After `feature/proxy` made the feature layer private, `getUsersAndFacilities` was still
@@ -529,6 +529,53 @@ was last changed.
   CfnPermission are intra-stack. The wildcard IAM from f513064 is kept; it's harmless and
   matches the rest of the codebase's pattern-2 style.
 - New rule: any `defineAuth.triggers.*` function MUST also set `resourceGroupName: 'auth'`.
+
+### feature/mobile-user-page-update — merged (PR #25 — 2026-05-18)
+
+Mobile redesign of the User Management table. On iPhone the original table required
+horizontal scrolling to reach the action buttons, then scrolling back to see emails.
+
+**Approach** (CSS-only — markup, TS, and a11y semantics unchanged):
+- At `@media (max-width: 767px)` flip `<table>/<tr>/<td>` to `display: block`; visually
+  hide `<thead>` (clip 1×1, kept in the a11y tree)
+- Each row becomes a card: border, `border-radius: 8px`, padding, light shadow,
+  bottom margin between cards
+- Email cell → prominent heading (1rem, 600 weight, word-break)
+- Status badge + facility count → side-by-side inline-flex on one secondary line
+- Action buttons → dedicated bottom region. `Edit Assignments` takes `flex: 1 1 100%`
+  (full row); secondary actions take `flex: 1 1 calc(50% - 0.25rem)` so two per row,
+  but a lone secondary stretches to fill via `flex-grow: 1`
+- All buttons retain ≥40–44px tap targets
+- Tableless re-flow eliminates the horizontal scrollbar entirely
+
+**Key file**: `src/components/AdminPanel/UserManagementPanel.module.css` (single
+media query block at the bottom of the file)
+
+### feature/list-mobile — merged (PR #26 — 2026-05-18)
+
+Same card-pattern redesign for the public Active Facilities List (`/list`). Six
+columns (Name, Address, Type, Hours, Phone, ADA) had been overflowing at iPhone width.
+
+**Approach**:
+- Identical `@media (max-width: 767px)` flip-to-cards pattern as PR #25
+- Name → prominent heading; Type pill on its own line below the name; address /
+  hours / phone / ADA stacked
+- Two values (Hours, ADA) are bare strings — meaningless without their column header
+  on mobile. Added a `<span className={styles.mobileLabel} aria-hidden="true">…:</span>`
+  prefix inside those two `<td>`s. The span is `display: none` on desktop and
+  `display: inline` at ≤767px. `aria-hidden` because the table column headers still
+  appear in the a11y tree (clipped, not removed)
+- The Maps link on Address and the `tel:` link on Phone continue to function unchanged
+
+**Key files**: `src/pages/FacilityListPage.tsx` (added two `mobileLabel` spans),
+`src/pages/FacilityListPage.module.css` (one media query block + the `.mobileLabel`
+default rule)
+
+**Mobile-card pattern (reusable)**: For any future tabular admin/list view where
+horizontal scroll on mobile is undesired, copy the media-query block from one of these
+files. The pattern is robust to column count: just stack the cells and add
+`.mobileLabel` prefixes to any cell whose value is meaningless without its column
+header. Avoid icon prefixes (no project convention for them yet).
 
 ---
 
