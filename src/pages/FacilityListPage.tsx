@@ -157,7 +157,12 @@ export default function FacilityListPage() {
                       <td>
                         <TypeBadge warming={f.warmingActive} cooling={f.coolingActive} />
                       </td>
-                      <td>{f.hours || t('common.notAvailable')}</td>
+                      <td>
+                        <span className={styles.mobileLabel} aria-hidden="true">
+                          {t('facility.hours')}:{' '}
+                        </span>
+                        {f.hours || t('common.notAvailable')}
+                      </td>
                       <td>
                         {f.phone ? (
                           <a href={`tel:${f.phone}`} className={styles.phoneLink}>
@@ -167,7 +172,12 @@ export default function FacilityListPage() {
                           t('common.notAvailable')
                         )}
                       </td>
-                      <td>{f.adaCompliant || t('common.notAvailable')}</td>
+                      <td>
+                        <span className={styles.mobileLabel} aria-hidden="true">
+                          {t('facility.adaCompliant')}:{' '}
+                        </span>
+                        {f.adaCompliant || t('common.notAvailable')}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

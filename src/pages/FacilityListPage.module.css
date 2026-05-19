@@ -136,3 +136,95 @@
   background: #f3e5f5;
   color: #4a148c;
 }
+
+/* Inline label prefix used only at narrow widths to substitute for the
+   column header (which is visually hidden when the table flips to cards) */
+.mobileLabel {
+  display: none;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  /* Flip the table into per-row cards: name as heading, type pill below,
+     then address / hours / phone / ADA stacked on their own lines. */
+  .tableWrapper {
+    border: none;
+    border-radius: 0;
+    overflow-x: visible;
+    background: transparent;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .table tbody tr {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 0.875rem 1rem;
+    margin-bottom: 0.75rem;
+    background: var(--color-surface);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+
+  .table tbody tr:last-child {
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .table tbody tr:hover {
+    background: var(--color-surface);
+  }
+
+  .table td {
+    padding: 0;
+    border: none;
+    min-width: 0;
+    margin-bottom: 0.4rem;
+    word-break: break-word;
+  }
+
+  .table td:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Name — prominent heading */
+  .nameCell {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+    line-height: 1.3;
+    min-width: 0;
+  }
+
+  /* Type badge gets a touch more breathing room below it */
+  .table td:nth-child(3) {
+    margin-bottom: 0.6rem;
+  }
+
+  /* Empty hours / phone / ADA values shouldn't leave bare value text — the
+     label prefix turns on at this width */
+  .mobileLabel {
+    display: inline;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-right: 0.25rem;
+  }
+}
