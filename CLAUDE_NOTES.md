@@ -143,7 +143,8 @@ dep: custom stack → Lambda stack. That is fine. These create cycles:
 | `updateUserFacilities` | PATCH /admin/users/facilities | Add/remove facility assignment for a user |
 | `getKeepOpen` | GET /facilities/keep-open | Return which of caller's facilities have a midnight-reset override active |
 | `updateKeepOpen` | PATCH /facilities/keep-open | Set or clear a keep-open override in DynamoDB |
-| `autoResetFacilities` | EventBridge cron | Nightly midnight CT reset — deactivates all facilities except those with a keep-open override |
+| `autoResetFacilities` | EventBridge cron | Nightly midnight CT reset — deactivates all facilities except those with a keep-open override; also sends Keep Open reminder emails on schedule (day 3, 7, 21, 35, …) |
+| `autoCloseByHours` | EventBridge cron */5 min | End-of-day reset: closes each active facility once its per-day closing time (from structured Hours) has passed in America/Chicago. Skips facilities whose today is Closed-per-Hours, whose Hours don't parse, whose schedule crosses midnight, or that have a keep-open override |
 | `addFacility` | POST /facility/add | Add new ArcGIS feature, append ObjectID to caller's `custom:facility_ids`, seed creator email in DynamoDB |
 | `updateFacilityAttributes` | POST /facility/update-attributes | Full attribute update for an existing facility (ownership check via `custom:facility_ids`) |
 | `getFacilityNotifications` | GET /facilities/notifications | Return `notificationEmails` string from DynamoDB for caller's facilities |
@@ -154,9 +155,13 @@ dep: custom stack → Lambda stack. That is fine. These create cycles:
 **SES config** (in `updateStatus/handler.ts`): sender `do-not-reply@dcgis.org`, region `us-east-1`.
 Recipients are hardcoded in the handler — update there if the notification list changes.
 
-**EventBridge schedule**: `cron(0 6 * * ? *)` = 06:00 UTC = midnight CST (~1 AM CDT; DST drift accepted).
+**EventBridge schedules**:
+- `cron(0 6 * * ? *)` (nightly reset + reminder fan-out) = 06:00 UTC = midnight CST (~1 AM CDT; DST drift accepted)
+- `cron(*/5 * * * ? *)` (end-of-day auto-close) = every 5 minutes
 
-**DynamoDB table** `FacilityOverrides`: PK `facilityId` (String). Schema coexists `keepOpen` (Boolean) and `notificationEmails` (String, comma-separated) in the same item. Uses `UpdateExpression SET/REMOVE` — not PutItem — so fields coexist without overwriting each other.
+**Keep Open reminder schedule**: day 3 → day 7 → day 21 → day 35 → day 49 … (3, then +4, then +14 indefinitely). Counter resets when Keep Open is disabled.
+
+**DynamoDB table** `FacilityOverrides`: PK `facilityId` (String). Schema coexists `keepOpen` (Boolean), `keepOpenSince` (Number, epoch ms — when Keep Open was enabled), `reminderCount` (Number — count of reminders sent this Keep Open session), and `notificationEmails` (String, comma-separated) in the same item. Uses `UpdateExpression SET/REMOVE` — not PutItem — so fields coexist without overwriting each other. `keepOpen`/`keepOpenSince`/`reminderCount` are written/cleared as a group by `updateKeepOpen`; `keepOpenSince` uses `if_not_exists` so a redundant enable-toggle doesn't reset the reminder clock.
 Table is managed **outside CDK** (was created by feature/auto-reset branch Amplify deployment with
 RETAIN policy). Lambda functions reference it by hardcoded name `'FacilityOverrides'` in their
 `resource.ts` environment blocks. IAM policies use `Stack.of(fn).formatArn(...)` with the literal.
@@ -632,6 +637,67 @@ to en/es/vi/ar.
 `src/pages/admin/AddFacilityModal.tsx` (FieldInput branch),
 `src/pages/admin/AdminPanel.tsx` (InlineFieldInput branch),
 `src/i18n/{en,es,vi,ar}.json`
+
+### feature/auto-close-and-reminder — merged (PR #30 — 2026-05-21)
+
+Two new automated behaviours on top of the existing nightly reset:
+
+**1. End-of-day auto-close** — new Lambda `autoCloseByHours`,
+EventBridge cron `*/5 * * * ? *`. Queries active facilities + their
+Hours, parses the structured Hours string (shared parser at
+`amplify/functions/shared/hours.ts` — duplicate of `src/utils/hours.ts`
+to avoid cross-tree imports), and resets Warming/Cooling_Active to
+'No' once the current America/Chicago time has passed today's
+closing time.
+
+Skip rules (all defer to the nightly reset, preserving the
+"emergency manual activation" case):
+- Hours doesn't parse
+- Today's `closed: true`
+- Schedule crosses midnight (`open >= close`)
+- Keep Open override active
+
+Timezone: handler computes current day-of-week + HH:MM in
+`America/Chicago` via `Intl.DateTimeFormat`. Lambda's own clock is
+UTC; the Intl conversion is the only timezone surface.
+
+**2. 3-day Keep Open reminder emails** — extended
+`autoResetFacilities` handler (piggybacks on the existing nightly
+cron so the reminder logic runs once per day, not every 5 min).
+SES email to that facility's `notificationEmails` list. Cadence:
+day 3, day 7, then every 14 days indefinitely (day 21, 35, 49, …).
+`reminderCount` is reset when Keep Open is disabled.
+
+DynamoDB additions on `FacilityOverrides`:
+- `keepOpenSince` (Number, epoch ms) — set in `updateKeepOpen` via
+  `if_not_exists` so a redundant on-toggle doesn't reset the clock
+- `reminderCount` (Number) — incremented after each reminder send;
+  REMOVEd along with `keepOpen` on disable
+
+**Legacy keep-open items**: `processReminders` in
+`autoResetFacilities/handler.ts` backfills `keepOpenSince=now` /
+`reminderCount=0` on first sight of any item lacking those fields
+(via `ConditionExpression: 'attribute_not_exists(keepOpenSince)'`).
+Their reminder clock starts at backfill time, not retroactively —
+no spurious day-N reminders for items enabled before the deploy.
+
+**IAM/wiring changes** (`amplify/backend.ts`):
+- `autoResetFn`: added `dynamodb:UpdateItem` (increment
+  `reminderCount`) and `ses:SendEmail`
+- `autoCloseFn`: added `dynamodb:Scan`
+- New `CfnPermission` + plain `IRuleTarget` for the 5-min EventBridge
+  rule (same cross-stack-cycle workaround as `NightlyResetRule` —
+  see CDK Circular Dependency Rules pattern 3)
+
+**Key files**: `amplify/functions/autoCloseByHours/{handler,resource}.ts`,
+`amplify/functions/shared/hours.ts`,
+`amplify/functions/autoResetFacilities/handler.ts` (added
+`processReminders` block + SES env wiring),
+`amplify/functions/autoResetFacilities/resource.ts` (added
+`SES_FROM_EMAIL`/`SES_REGION`/`APP_URL`),
+`amplify/functions/updateKeepOpen/handler.ts` (set/clear
+`keepOpenSince` + `reminderCount`),
+`amplify/backend.ts`
 
 ### feature/admin-assign-fix — merged (PR #29 — 2026-05-21)
 
