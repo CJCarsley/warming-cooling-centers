@@ -577,6 +577,62 @@ files. The pattern is robust to column count: just stack the cells and add
 `.mobileLabel` prefixes to any cell whose value is meaningless without its column
 header. Avoid icon prefixes (no project convention for them yet).
 
+### feature/accessibility-trans — merged (PR #27 — 2026-05-21)
+
+The `/accessibility` page was previously English-only — switching the
+header language switcher left every section in English. Now follows
+the active language.
+
+**Approach**:
+- Added a top-level `accessibility.*` namespace to all four locale
+  JSONs (en/es/vi/ar) covering: heading dates, Commitment, Features
+  list (label + text per item), Interactive Map, Feedback & Contact,
+  ADA Information
+- Refactored `src/pages/AccessibilityStatement.tsx` to use `t()` for
+  plain strings and `<Trans>` for the three sentences with inline
+  links (WCAG external link, `/list` internal Link, DOJ external link)
+- The `<Trans>` placeholders use named components (`wcag`, `list`,
+  `doj`) — the JSX wrapper at the call site supplies the actual `<a>`
+  / `<Link>` element
+
+**Key files**: `src/pages/AccessibilityStatement.tsx`,
+`src/i18n/{en,es,vi,ar}.json`
+
+### feature/hours — in PR (2026-05-21)
+
+User request: more structured way to edit a facility's `Hours` than
+a freeform text input. ArcGIS field stays a single string column —
+the editor produces a canonical string the existing column can hold.
+
+**Approach** (per-day grid; option B from the design discussion):
+- New `src/components/admin/HoursEditor.tsx` renders a 7-row grid
+  (Mon→Sun) with two `<input type="time">` per row + a `Closed`
+  checkbox. Mobile (≤600px) stacks the time pair below the day label
+- Output format (canonical, collapsed): `Mon–Fri: 9:00 AM–5:00 PM; Sat–Sun: Closed`.
+  Consecutive days with identical schedules collapse to a range.
+  `00:00`–`23:59` displays as `Open 24 hours`
+- Parser (`src/utils/hours.ts`) round-trips the canonical form and
+  tolerates en-dash / em-dash / ASCII-hyphen and `24/7` aliases
+- Wired into both `FieldInput` (Add modal) and `InlineFieldInput`
+  (Edit form on AdminPanel) by branching on `field.name === 'Hours'`
+
+**Data-safety behavior**: existing facilities have freeform Hours
+strings that won't always parse. When parse fails the grid starts
+all-closed but the underlying form value is **not** overwritten
+until the user actually touches a day — opening Edit and saving
+without touching Hours preserves the original string. A warning
+banner above the grid shows the raw value in that case.
+
+**i18n**: added `admin.hours.*` block (`legend`, `closed`,
+`openTime`/`closeTime` aria labels, `parseWarning`, full day names)
+to en/es/vi/ar.
+
+**Key files**: `src/utils/hours.ts`, `src/components/admin/HoursEditor.tsx`,
+`src/components/admin/HoursEditor.module.css`,
+`src/pages/admin/AddFacilityModal.tsx` (FieldInput branch),
+`src/pages/admin/AdminPanel.tsx` (InlineFieldInput branch),
+`src/i18n/{en,es,vi,ar}.json`
+
 ---
 
 ## Git Workflow Notes
