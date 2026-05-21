@@ -67,12 +67,20 @@ export const handler = async (
 
   try {
     if (keepOpen) {
+      // if_not_exists preserves the original enable time if Keep Open was already on
+      // (e.g., a redundant toggle from a stale UI shouldn't reset the reminder clock).
+      // reminderCount starts at 0 so the day-3 reminder fires on first eligibility.
       await ddb.send(
         new UpdateCommand({
           TableName: TABLE_NAME,
           Key: { facilityId: String(facilityId) },
-          UpdateExpression: 'SET keepOpen = :val',
-          ExpressionAttributeValues: { ':val': true },
+          UpdateExpression:
+            'SET keepOpen = :val, keepOpenSince = if_not_exists(keepOpenSince, :now), reminderCount = if_not_exists(reminderCount, :zero)',
+          ExpressionAttributeValues: {
+            ':val': true,
+            ':now': Date.now(),
+            ':zero': 0,
+          },
         }),
       );
     } else {
@@ -80,7 +88,7 @@ export const handler = async (
         new UpdateCommand({
           TableName: TABLE_NAME,
           Key: { facilityId: String(facilityId) },
-          UpdateExpression: 'REMOVE keepOpen',
+          UpdateExpression: 'REMOVE keepOpen, keepOpenSince, reminderCount',
         }),
       );
     }
