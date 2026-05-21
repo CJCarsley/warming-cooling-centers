@@ -41,7 +41,7 @@ export const handler = async (
     | undefined;
   const groups = parseGroups(claims?.['cognito:groups']);
 
-  if (!groups.includes('SuperAdmin')) {
+  if (!groups.includes('SuperAdmin') && !groups.includes('Admin')) {
     return {
       statusCode: 403,
       headers: CORS_HEADERS,
