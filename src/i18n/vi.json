@@ -183,5 +183,57 @@
       "sent": "Đã gửi yêu cầu truy cập. Đang chờ phê duyệt.",
       "error": "Không thể gửi yêu cầu truy cập. Vui lòng thử lại."
     }
+  },
+  "accessibility": {
+    "lastReviewed": "Đánh giá lần cuối: Tháng 5 năm 2026",
+    "commitment": {
+      "heading": "Cam Kết Của Chúng Tôi",
+      "body": "Sở Y Tế Quận Douglas cam kết bảo đảm rằng ứng dụng Trung Tâm Sưởi Ấm và Làm Mát Quận Douglas có thể tiếp cận được với mọi người, bao gồm cả người khuyết tật. Chúng tôi nỗ lực tuân thủ <wcag>Hướng Dẫn Khả Năng Truy Cập Nội Dung Web (WCAG) 2.1, Cấp độ AA</wcag>, theo yêu cầu của luật liên bang và tiểu bang hiện hành, bao gồm Tiêu đề II của Đạo Luật Người Mỹ Khuyết Tật (ADA)."
+    },
+    "features": {
+      "heading": "Tính Năng Hỗ Trợ Tiếp Cận",
+      "intro": "Ứng dụng này bao gồm các tính năng hỗ trợ tiếp cận sau:",
+      "items": {
+        "keyboardLabel": "Điều hướng bằng bàn phím:",
+        "keyboardText": "Tất cả các thành phần tương tác — bao gồm điều khiển bản đồ, điều hướng, bộ chuyển ngôn ngữ và cổng dành cho nhân viên — đều có thể vận hành đầy đủ chỉ bằng bàn phím.",
+        "skipLinkLabel": "Chuyển đến nội dung chính:",
+        "skipLinkText": "Liên kết «Chuyển đến nội dung chính» xuất hiện ở đầu mỗi trang, cho phép người dùng bàn phím và trình đọc màn hình bỏ qua phần điều hướng lặp lại.",
+        "screenReaderLabel": "Hỗ trợ trình đọc màn hình:",
+        "screenReaderText": "Ứng dụng sử dụng HTML ngữ nghĩa, vai trò ARIA, nhãn và vùng trực tiếp để truyền tải các thay đổi nội dung động đến công nghệ hỗ trợ.",
+        "textAltLabel": "Thay thế bằng văn bản:",
+        "textAltText": "Thông tin trạng thái (ví dụ: trung tâm sưởi ấm so với làm mát, hoạt động so với không hoạt động) được truyền tải thông qua nhãn văn bản, không chỉ bằng màu sắc.",
+        "contrastLabel": "Độ tương phản màu:",
+        "contrastText": "Văn bản và các thành phần tương tác đáp ứng hoặc vượt qua tỷ lệ tương phản tối thiểu WCAG 2.1 AA là 4,5:1 đối với văn bản thông thường và 3:1 đối với văn bản lớn.",
+        "facilityListLabel": "Danh sách cơ sở dễ tiếp cận:",
+        "facilityListText": "Có sẵn một <list>danh sách cơ sở dạng văn bản</list> dễ tiếp cận như một giải pháp thay thế cho bản đồ tương tác, cung cấp tất cả thông tin về các cơ sở đang hoạt động trong một bảng có cấu trúc, điều hướng được bằng bàn phím.",
+        "multilingualLabel": "Hỗ trợ đa ngôn ngữ:",
+        "multilingualText": "Ứng dụng có sẵn bằng tiếng Anh, tiếng Tây Ban Nha, tiếng Ả Rập và tiếng Việt, có thể chọn qua bộ chuyển ngôn ngữ ở phần đầu trang. Tiếng Ả Rập được hiển thị từ phải sang trái.",
+        "responsiveLabel": "Thiết kế đáp ứng:",
+        "responsiveText": "Ứng dụng hoạt động trên máy tính để bàn, máy tính bảng và thiết bị di động.",
+        "noAutoplayLabel": "Không phát phương tiện tự động:",
+        "noAutoplayText": "Không có nội dung âm thanh hoặc video nào phát tự động.",
+        "consistentNavLabel": "Điều hướng nhất quán:",
+        "consistentNavText": "Các liên kết điều hướng được hiển thị nhất quán trên tất cả các trang.",
+        "focusLabel": "Chỉ báo tiêu điểm rõ ràng:",
+        "focusText": "Tiêu điểm bàn phím hiển thị rõ ràng trên tất cả các thành phần tương tác."
+      }
+    },
+    "map": {
+      "heading": "Bản Đồ Tương Tác",
+      "body": "Giao diện chính bao gồm bản đồ tương tác được hỗ trợ bởi ArcGIS. Mặc dù chúng tôi đã triển khai các điều khiển bàn phím và nhãn ARIA cho các tương tác với bản đồ, chúng tôi nhận thấy rằng bản đồ tương tác có thể gây ra thách thức cho một số người dùng. <list>Trang danh sách cơ sở</list> cung cấp cùng thông tin về các cơ sở đang hoạt động trong định dạng bảng có thể truy cập đầy đủ mà không yêu cầu tương tác với bản đồ."
+    },
+    "feedback": {
+      "heading": "Phản Hồi và Liên Hệ",
+      "body": "Chúng tôi hoan nghênh phản hồi về khả năng tiếp cận của ứng dụng này. Nếu bạn gặp phải bất kỳ rào cản tiếp cận nào hoặc muốn nhận thông tin ở định dạng thay thế, vui lòng liên hệ với chúng tôi:",
+      "contactFormLabel": "Biểu mẫu liên hệ trực tuyến:",
+      "departmentName": "Sở Y Tế Quận Douglas",
+      "departmentAddress": "1111 S. 41st Street, Omaha, NE 68105",
+      "responseTime": "Chúng tôi nỗ lực phản hồi các phản hồi về khả năng tiếp cận trong vòng 2 ngày làm việc."
+    },
+    "ada": {
+      "heading": "Thông Tin về ADA",
+      "body1": "Sở Y Tế Quận Douglas là một thực thể công cộng thuộc phạm vi điều chỉnh của Tiêu đề II của Đạo Luật Người Mỹ Khuyết Tật năm 1990 (ADA). Theo Tiêu đề II, không một cá nhân khuyết tật đủ điều kiện nào, vì lý do khuyết tật đó, sẽ bị loại khỏi sự tham gia hoặc bị từ chối các quyền lợi của các dịch vụ, chương trình hoặc hoạt động của một thực thể công cộng.",
+      "body2": "Nếu bạn tin rằng mình bị phân biệt đối xử dựa trên khuyết tật, bạn có thể nộp đơn khiếu nại với <doj>Đường Dây Thông Tin ADA của Bộ Tư Pháp Hoa Kỳ</doj>."
+    }
   }
 }
