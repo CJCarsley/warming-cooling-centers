@@ -146,6 +146,22 @@
       "keepOpenActive": "Midnight reset override active",
       "conflictWarning": "Note: enabling {{newType}} will automatically deactivate {{clearType}}."
     },
+    "hours": {
+      "legend": "Hours of operation",
+      "closed": "Closed",
+      "openTime": "{{day}} opening time",
+      "closeTime": "{{day}} closing time",
+      "parseWarning": "Couldn't load the existing hours into the grid. Editing any day below will replace this value. Current value:",
+      "day": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+      }
+    },
     "users": {
       "heading": "User Management",
       "navLink": "User Management",

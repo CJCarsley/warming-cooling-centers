@@ -143,6 +143,22 @@
       "keepOpenActive": "Ngoại lệ đặt lại nửa đêm đang hoạt động",
       "conflictWarning": "Lưu ý: bật {{newType}} sẽ tự động tắt {{clearType}}."
     },
+    "hours": {
+      "legend": "Giờ hoạt động",
+      "closed": "Đóng cửa",
+      "openTime": "Giờ mở cửa {{day}}",
+      "closeTime": "Giờ đóng cửa {{day}}",
+      "parseWarning": "Không thể tải giờ hiện có vào bảng. Chỉnh sửa bất kỳ ngày nào sẽ thay thế giá trị này. Giá trị hiện tại:",
+      "day": {
+        "mon": "Thứ Hai",
+        "tue": "Thứ Ba",
+        "wed": "Thứ Tư",
+        "thu": "Thứ Năm",
+        "fri": "Thứ Sáu",
+        "sat": "Thứ Bảy",
+        "sun": "Chủ Nhật"
+      }
+    },
     "deleteFacility": {
       "link": "Delete",
       "confirmTitle": "Delete Facility",

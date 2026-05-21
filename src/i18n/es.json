@@ -145,6 +145,22 @@
       "keepOpenActive": "Excepción de reinicio nocturno activa",
       "conflictWarning": "Nota: activar {{newType}} desactivará automáticamente {{clearType}}."
     },
+    "hours": {
+      "legend": "Horario de atención",
+      "closed": "Cerrado",
+      "openTime": "Hora de apertura del {{day}}",
+      "closeTime": "Hora de cierre del {{day}}",
+      "parseWarning": "No se pudo cargar el horario existente en la cuadrícula. Editar cualquier día reemplazará este valor. Valor actual:",
+      "day": {
+        "mon": "Lunes",
+        "tue": "Martes",
+        "wed": "Miércoles",
+        "thu": "Jueves",
+        "fri": "Viernes",
+        "sat": "Sábado",
+        "sun": "Domingo"
+      }
+    },
     "users": {
       "heading": "Gestión de Usuarios",
       "navLink": "Gestión de Usuarios",
