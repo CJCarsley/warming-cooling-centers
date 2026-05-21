@@ -21,6 +21,7 @@ import { updateUserFacilities } from './functions/updateUserFacilities/resource'
 import { getKeepOpen } from './functions/getKeepOpen/resource';
 import { updateKeepOpen } from './functions/updateKeepOpen/resource';
 import { autoResetFacilities } from './functions/autoResetFacilities/resource';
+import { autoCloseByHours } from './functions/autoCloseByHours/resource';
 import { addFacility } from './functions/addFacility/resource';
 import { updateFacilityAttributes } from './functions/updateFacilityAttributes/resource';
 import { getFacilityNotifications } from './functions/getFacilityNotifications/resource';
@@ -40,6 +41,7 @@ const backend = defineBackend({
   getKeepOpen,
   updateKeepOpen,
   autoResetFacilities,
+  autoCloseByHours,
   addFacility,
   updateFacilityAttributes,
   getFacilityNotifications,
@@ -79,6 +81,7 @@ const updateFacilitiesFn = backend.updateUserFacilities.resources.lambda as Lamb
 const getKeepOpenFn = backend.getKeepOpen.resources.lambda as LambdaFunction;
 const updateKeepOpenFn = backend.updateKeepOpen.resources.lambda as LambdaFunction;
 const autoResetFn = backend.autoResetFacilities.resources.lambda as LambdaFunction;
+const autoCloseFn = backend.autoCloseByHours.resources.lambda as LambdaFunction;
 const addFacilityFn = backend.addFacility.resources.lambda as LambdaFunction;
 const updateFacilityAttrsFn = backend.updateFacilityAttributes.resources.lambda as LambdaFunction;
 const getFacilityNotificationsFn = backend.getFacilityNotifications.resources.lambda as LambdaFunction;
@@ -214,7 +217,8 @@ const TABLE_LITERAL = 'FacilityOverrides';
 for (const [fn, actions] of [
   [getKeepOpenFn, ['dynamodb:BatchGetItem', 'dynamodb:GetItem']],
   [updateKeepOpenFn, ['dynamodb:UpdateItem']],
-  [autoResetFn, ['dynamodb:Scan']],
+  [autoResetFn, ['dynamodb:Scan', 'dynamodb:UpdateItem']],
+  [autoCloseFn, ['dynamodb:Scan']],
   [updateStatusFn, ['dynamodb:GetItem']],
   [getFacilityNotificationsFn, ['dynamodb:GetItem']],
   [setFacilityNotificationsFn, ['dynamodb:UpdateItem']],
@@ -386,6 +390,36 @@ const autoResetTarget: IRuleTarget = {
 new Rule(apiStack, 'NightlyResetRule', {
   schedule: Schedule.cron({ minute: '0', hour: '6' }),
   targets: [autoResetTarget],
+});
+
+// SES permission for autoReset (Keep Open reminder emails)
+autoResetFn.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['ses:SendEmail'],
+    resources: ['*'],
+  }),
+);
+
+// ── EventBridge rule: every 5 minutes — auto-close facilities past their
+// per-day closing time (per the Hours field). Same cross-stack-cycle workaround
+// as NightlyResetRule. ──
+new CfnPermission(apiStack, 'AutoCloseInvokePermission', {
+  action: 'lambda:InvokeFunction',
+  functionName: autoCloseFn.functionArn,
+  principal: 'events.amazonaws.com',
+});
+
+const autoCloseTarget: IRuleTarget = {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  bind: (_rule: IRule, _id?: string): RuleTargetConfig => ({
+    arn: autoCloseFn.functionArn,
+  }),
+};
+
+new Rule(apiStack, 'AutoCloseByHoursRule', {
+  schedule: Schedule.cron({ minute: '*/5' }),
+  targets: [autoCloseTarget],
 });
 
 // ── Add cjcarsley to SuperAdmin group (idempotent) ────────────────────────────
