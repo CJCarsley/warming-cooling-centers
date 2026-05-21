@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import styles from './AccessibilityStatement.module.css';
 
 export default function AccessibilityStatement() {
@@ -13,139 +13,125 @@ export default function AccessibilityStatement() {
         </Link>
 
         <h1 className={styles.heading}>{t('footer.accessibilityStatement')}</h1>
-        <p className={styles.updated}>Last reviewed: May 2026</p>
+        <p className={styles.updated}>{t('accessibility.lastReviewed')}</p>
 
         <section aria-labelledby="commitment-heading">
-          <h2 id="commitment-heading">Our Commitment</h2>
+          <h2 id="commitment-heading">{t('accessibility.commitment.heading')}</h2>
           <p>
-            Douglas County Health Department is committed to ensuring the Douglas County
-            Warming &amp; Cooling Centers application is accessible to everyone, including
-            individuals with disabilities. We strive to conform to the{' '}
-            <a
-              href="https://www.w3.org/WAI/WCAG21/Understanding/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Web Content Accessibility Guidelines (WCAG) 2.1, Level AA
-            </a>{' '}
-            as required under applicable federal and state law, including Title II of the
-            Americans with Disabilities Act (ADA).
+            <Trans
+              i18nKey="accessibility.commitment.body"
+              components={{
+                wcag: (
+                  <a
+                    href="https://www.w3.org/WAI/WCAG21/Understanding/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                ),
+              }}
+            />
           </p>
         </section>
 
         <section aria-labelledby="features-heading">
-          <h2 id="features-heading">Accessibility Features</h2>
-          <p>This application includes the following accessibility features:</p>
+          <h2 id="features-heading">{t('accessibility.features.heading')}</h2>
+          <p>{t('accessibility.features.intro')}</p>
           <ul>
             <li>
-              <strong>Keyboard navigation:</strong> All interactive elements—including map
-              controls, navigation, the language switcher, and the staff portal—are fully
-              operable via keyboard alone.
+              <strong>{t('accessibility.features.items.keyboardLabel')}</strong>{' '}
+              {t('accessibility.features.items.keyboardText')}
             </li>
             <li>
-              <strong>Skip to main content:</strong> A "Skip to main content" link appears at
-              the top of every page, allowing keyboard and screen reader users to bypass
-              repetitive navigation.
+              <strong>{t('accessibility.features.items.skipLinkLabel')}</strong>{' '}
+              {t('accessibility.features.items.skipLinkText')}
             </li>
             <li>
-              <strong>Screen reader support:</strong> The application uses semantic HTML,
-              ARIA roles, labels, and live regions to communicate dynamic content changes to
-              assistive technologies.
+              <strong>{t('accessibility.features.items.screenReaderLabel')}</strong>{' '}
+              {t('accessibility.features.items.screenReaderText')}
             </li>
             <li>
-              <strong>Text alternatives:</strong> Status information (e.g., warming vs.
-              cooling center, active vs. inactive) is conveyed through text labels, not color
-              alone.
+              <strong>{t('accessibility.features.items.textAltLabel')}</strong>{' '}
+              {t('accessibility.features.items.textAltText')}
             </li>
             <li>
-              <strong>Color contrast:</strong> Text and interactive elements meet or exceed
-              the WCAG 2.1 AA minimum contrast ratio of 4.5:1 for normal text and 3:1 for
-              large text.
+              <strong>{t('accessibility.features.items.contrastLabel')}</strong>{' '}
+              {t('accessibility.features.items.contrastText')}
             </li>
             <li>
-              <strong>Accessible facility list:</strong> An accessible{' '}
-              <Link to="/list">text-based facility list</Link> is available as an alternative
-              to the interactive map, providing all active facility information in a
-              structured, keyboard-navigable table.
+              <strong>{t('accessibility.features.items.facilityListLabel')}</strong>{' '}
+              <Trans
+                i18nKey="accessibility.features.items.facilityListText"
+                components={{ list: <Link to="/list" /> }}
+              />
             </li>
             <li>
-              <strong>Multilingual support:</strong> The application is available in English,
-              Spanish, Arabic, and Vietnamese, selectable via the language switcher in the
-              header. Arabic is displayed right-to-left.
+              <strong>{t('accessibility.features.items.multilingualLabel')}</strong>{' '}
+              {t('accessibility.features.items.multilingualText')}
             </li>
             <li>
-              <strong>Responsive design:</strong> The application works across desktop,
-              tablet, and mobile devices.
+              <strong>{t('accessibility.features.items.responsiveLabel')}</strong>{' '}
+              {t('accessibility.features.items.responsiveText')}
             </li>
             <li>
-              <strong>No auto-playing media:</strong> No audio or video content plays
-              automatically.
+              <strong>{t('accessibility.features.items.noAutoplayLabel')}</strong>{' '}
+              {t('accessibility.features.items.noAutoplayText')}
             </li>
             <li>
-              <strong>Consistent navigation:</strong> Navigation links are presented
-              consistently across all pages.
+              <strong>{t('accessibility.features.items.consistentNavLabel')}</strong>{' '}
+              {t('accessibility.features.items.consistentNavText')}
             </li>
             <li>
-              <strong>Visible focus indicators:</strong> Keyboard focus is clearly visible on
-              all interactive elements.
+              <strong>{t('accessibility.features.items.focusLabel')}</strong>{' '}
+              {t('accessibility.features.items.focusText')}
             </li>
           </ul>
         </section>
 
         <section aria-labelledby="maps-heading">
-          <h2 id="maps-heading">Interactive Map</h2>
+          <h2 id="maps-heading">{t('accessibility.map.heading')}</h2>
           <p>
-            The primary interface includes an interactive map powered by ArcGIS. While we
-            have implemented keyboard controls and ARIA labels for map interactions, we
-            recognize that interactive maps can present challenges for some users. The{' '}
-            <Link to="/list">facility list page</Link> provides the same active-facility
-            information in a fully accessible table format without requiring map interaction.
+            <Trans
+              i18nKey="accessibility.map.body"
+              components={{ list: <Link to="/list" /> }}
+            />
           </p>
         </section>
 
         <section aria-labelledby="feedback-heading">
-          <h2 id="feedback-heading">Feedback &amp; Contact</h2>
-          <p>
-            We welcome feedback on the accessibility of this application. If you encounter
-            any accessibility barriers or would like information in an alternative format,
-            please contact us:
-          </p>
+          <h2 id="feedback-heading">{t('accessibility.feedback.heading')}</h2>
+          <p>{t('accessibility.feedback.body')}</p>
           <ul>
             <li>
-              <strong>Online contact form:</strong>{' '}
+              <strong>{t('accessibility.feedback.contactFormLabel')}</strong>{' '}
               <a href="https://contact.dogis.org/" target="_blank" rel="noopener noreferrer">
                 contact.dogis.org
               </a>
             </li>
             <li>
-              <strong>Douglas County Health Department</strong>
+              <strong>{t('accessibility.feedback.departmentName')}</strong>
               <br />
-              1111 S. 41st Street, Omaha, NE 68105
+              {t('accessibility.feedback.departmentAddress')}
             </li>
           </ul>
-          <p>We aim to respond to accessibility feedback within 2 business days.</p>
+          <p>{t('accessibility.feedback.responseTime')}</p>
         </section>
 
         <section aria-labelledby="ada-heading">
-          <h2 id="ada-heading">ADA Information</h2>
+          <h2 id="ada-heading">{t('accessibility.ada.heading')}</h2>
+          <p>{t('accessibility.ada.body1')}</p>
           <p>
-            Douglas County Health Department is a public entity subject to Title II of the
-            Americans with Disabilities Act of 1990 (ADA). Under Title II, no qualified
-            individual with a disability shall, by reason of such disability, be excluded
-            from participation in or be denied the benefits of the services, programs, or
-            activities of a public entity.
-          </p>
-          <p>
-            If you believe you have been discriminated against on the basis of a disability,
-            you may file a complaint with the{' '}
-            <a
-              href="https://www.ada.gov/filing-a-complaint/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              U.S. Department of Justice ADA Information Line
-            </a>
-            .
+            <Trans
+              i18nKey="accessibility.ada.body2"
+              components={{
+                doj: (
+                  <a
+                    href="https://www.ada.gov/filing-a-complaint/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                ),
+              }}
+            />
           </p>
         </section>
       </div>

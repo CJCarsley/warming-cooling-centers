@@ -261,5 +261,57 @@
       "removeSuccess": "{{facility}} eliminado de {{email}}",
       "assignError": "Error al actualizar la asignación. Por favor, inténtelo de nuevo."
     }
+  },
+  "accessibility": {
+    "lastReviewed": "Última revisión: mayo de 2026",
+    "commitment": {
+      "heading": "Nuestro Compromiso",
+      "body": "El Departamento de Salud del Condado Douglas se compromete a garantizar que la aplicación de Centros de Calefacción y Refrigeración del Condado Douglas sea accesible para todos, incluidas las personas con discapacidades. Nos esforzamos por cumplir con las <wcag>Pautas de Accesibilidad para el Contenido Web (WCAG) 2.1, Nivel AA</wcag>, según lo exige la ley federal y estatal aplicable, incluido el Título II de la Ley sobre Estadounidenses con Discapacidades (ADA)."
+    },
+    "features": {
+      "heading": "Características de Accesibilidad",
+      "intro": "Esta aplicación incluye las siguientes características de accesibilidad:",
+      "items": {
+        "keyboardLabel": "Navegación por teclado:",
+        "keyboardText": "Todos los elementos interactivos —incluidos los controles del mapa, la navegación, el selector de idioma y el portal del personal— son completamente operables solo con el teclado.",
+        "skipLinkLabel": "Saltar al contenido principal:",
+        "skipLinkText": "Un enlace «Saltar al contenido principal» aparece en la parte superior de cada página, permitiendo a los usuarios de teclado y lectores de pantalla omitir la navegación repetitiva.",
+        "screenReaderLabel": "Compatibilidad con lectores de pantalla:",
+        "screenReaderText": "La aplicación utiliza HTML semántico, roles ARIA, etiquetas y regiones en vivo para comunicar los cambios de contenido dinámico a las tecnologías de asistencia.",
+        "textAltLabel": "Alternativas textuales:",
+        "textAltText": "La información de estado (por ejemplo, centro de calefacción frente a refrigeración, activo frente a inactivo) se transmite mediante etiquetas de texto, no solo por color.",
+        "contrastLabel": "Contraste de color:",
+        "contrastText": "El texto y los elementos interactivos cumplen o superan la relación mínima de contraste WCAG 2.1 AA de 4,5:1 para texto normal y 3:1 para texto grande.",
+        "facilityListLabel": "Lista accesible de centros:",
+        "facilityListText": "Hay disponible una <list>lista de centros basada en texto</list> accesible como alternativa al mapa interactivo, que ofrece toda la información de los centros activos en una tabla estructurada y navegable por teclado.",
+        "multilingualLabel": "Compatibilidad multilingüe:",
+        "multilingualText": "La aplicación está disponible en inglés, español, árabe y vietnamita, seleccionables mediante el selector de idioma en el encabezado. El árabe se muestra de derecha a izquierda.",
+        "responsiveLabel": "Diseño adaptable:",
+        "responsiveText": "La aplicación funciona en computadoras de escritorio, tabletas y dispositivos móviles.",
+        "noAutoplayLabel": "Sin reproducción automática de medios:",
+        "noAutoplayText": "Ningún contenido de audio o video se reproduce automáticamente.",
+        "consistentNavLabel": "Navegación consistente:",
+        "consistentNavText": "Los enlaces de navegación se presentan de manera consistente en todas las páginas.",
+        "focusLabel": "Indicadores de foco visibles:",
+        "focusText": "El foco del teclado es claramente visible en todos los elementos interactivos."
+      }
+    },
+    "map": {
+      "heading": "Mapa Interactivo",
+      "body": "La interfaz principal incluye un mapa interactivo desarrollado con ArcGIS. Si bien hemos implementado controles de teclado y etiquetas ARIA para las interacciones con el mapa, reconocemos que los mapas interactivos pueden presentar desafíos para algunos usuarios. La <list>página de lista de centros</list> proporciona la misma información sobre los centros activos en un formato de tabla totalmente accesible, sin requerir interacción con el mapa."
+    },
+    "feedback": {
+      "heading": "Comentarios y Contacto",
+      "body": "Agradecemos los comentarios sobre la accesibilidad de esta aplicación. Si encuentra alguna barrera de accesibilidad o desea recibir la información en un formato alternativo, póngase en contacto con nosotros:",
+      "contactFormLabel": "Formulario de contacto en línea:",
+      "departmentName": "Departamento de Salud del Condado Douglas",
+      "departmentAddress": "1111 S. 41st Street, Omaha, NE 68105",
+      "responseTime": "Procuramos responder a los comentarios sobre accesibilidad en un plazo de 2 días hábiles."
+    },
+    "ada": {
+      "heading": "Información sobre la ADA",
+      "body1": "El Departamento de Salud del Condado Douglas es una entidad pública sujeta al Título II de la Ley sobre Estadounidenses con Discapacidades de 1990 (ADA). Conforme al Título II, ninguna persona calificada con discapacidad podrá ser excluida, por razón de dicha discapacidad, de la participación en los servicios, programas o actividades de una entidad pública, ni se le negarán sus beneficios.",
+      "body2": "Si cree que ha sido discriminado por motivo de discapacidad, puede presentar una queja ante la <doj>Línea de Información de la ADA del Departamento de Justicia de EE. UU.</doj>"
+    }
   }
 }

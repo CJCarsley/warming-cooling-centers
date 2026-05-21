@@ -262,5 +262,57 @@
       "removeSuccess": "{{facility}} removed from {{email}}",
       "assignError": "Failed to update assignment. Please try again."
     }
+  },
+  "accessibility": {
+    "lastReviewed": "Last reviewed: May 2026",
+    "commitment": {
+      "heading": "Our Commitment",
+      "body": "Douglas County Health Department is committed to ensuring the Douglas County Warming & Cooling Centers application is accessible to everyone, including individuals with disabilities. We strive to conform to the <wcag>Web Content Accessibility Guidelines (WCAG) 2.1, Level AA</wcag> as required under applicable federal and state law, including Title II of the Americans with Disabilities Act (ADA)."
+    },
+    "features": {
+      "heading": "Accessibility Features",
+      "intro": "This application includes the following accessibility features:",
+      "items": {
+        "keyboardLabel": "Keyboard navigation:",
+        "keyboardText": "All interactive elements—including map controls, navigation, the language switcher, and the staff portal—are fully operable via keyboard alone.",
+        "skipLinkLabel": "Skip to main content:",
+        "skipLinkText": "A \"Skip to main content\" link appears at the top of every page, allowing keyboard and screen reader users to bypass repetitive navigation.",
+        "screenReaderLabel": "Screen reader support:",
+        "screenReaderText": "The application uses semantic HTML, ARIA roles, labels, and live regions to communicate dynamic content changes to assistive technologies.",
+        "textAltLabel": "Text alternatives:",
+        "textAltText": "Status information (e.g., warming vs. cooling center, active vs. inactive) is conveyed through text labels, not color alone.",
+        "contrastLabel": "Color contrast:",
+        "contrastText": "Text and interactive elements meet or exceed the WCAG 2.1 AA minimum contrast ratio of 4.5:1 for normal text and 3:1 for large text.",
+        "facilityListLabel": "Accessible facility list:",
+        "facilityListText": "An accessible <list>text-based facility list</list> is available as an alternative to the interactive map, providing all active facility information in a structured, keyboard-navigable table.",
+        "multilingualLabel": "Multilingual support:",
+        "multilingualText": "The application is available in English, Spanish, Arabic, and Vietnamese, selectable via the language switcher in the header. Arabic is displayed right-to-left.",
+        "responsiveLabel": "Responsive design:",
+        "responsiveText": "The application works across desktop, tablet, and mobile devices.",
+        "noAutoplayLabel": "No auto-playing media:",
+        "noAutoplayText": "No audio or video content plays automatically.",
+        "consistentNavLabel": "Consistent navigation:",
+        "consistentNavText": "Navigation links are presented consistently across all pages.",
+        "focusLabel": "Visible focus indicators:",
+        "focusText": "Keyboard focus is clearly visible on all interactive elements."
+      }
+    },
+    "map": {
+      "heading": "Interactive Map",
+      "body": "The primary interface includes an interactive map powered by ArcGIS. While we have implemented keyboard controls and ARIA labels for map interactions, we recognize that interactive maps can present challenges for some users. The <list>facility list page</list> provides the same active-facility information in a fully accessible table format without requiring map interaction."
+    },
+    "feedback": {
+      "heading": "Feedback & Contact",
+      "body": "We welcome feedback on the accessibility of this application. If you encounter any accessibility barriers or would like information in an alternative format, please contact us:",
+      "contactFormLabel": "Online contact form:",
+      "departmentName": "Douglas County Health Department",
+      "departmentAddress": "1111 S. 41st Street, Omaha, NE 68105",
+      "responseTime": "We aim to respond to accessibility feedback within 2 business days."
+    },
+    "ada": {
+      "heading": "ADA Information",
+      "body1": "Douglas County Health Department is a public entity subject to Title II of the Americans with Disabilities Act of 1990 (ADA). Under Title II, no qualified individual with a disability shall, by reason of such disability, be excluded from participation in or be denied the benefits of the services, programs, or activities of a public entity.",
+      "body2": "If you believe you have been discriminated against on the basis of a disability, you may file a complaint with the <doj>U.S. Department of Justice ADA Information Line</doj>."
+    }
   }
 }
