@@ -598,7 +598,7 @@ the active language.
 **Key files**: `src/pages/AccessibilityStatement.tsx`,
 `src/i18n/{en,es,vi,ar}.json`
 
-### feature/hours — in PR (2026-05-21)
+### feature/hours — merged (PR #28 — 2026-05-21)
 
 User request: more structured way to edit a facility's `Hours` than
 a freeform text input. ArcGIS field stays a single string column —
@@ -632,6 +632,21 @@ to en/es/vi/ar.
 `src/pages/admin/AddFacilityModal.tsx` (FieldInput branch),
 `src/pages/admin/AdminPanel.tsx` (InlineFieldInput branch),
 `src/i18n/{en,es,vi,ar}.json`
+
+### feature/admin-assign-fix — merged (PR #29 — 2026-05-21)
+
+`updateUserFacilities/handler.ts:44` still required SuperAdmin. When
+the Admin tier was introduced in feature/updates-2.0, sibling Lambdas
+(`getUsersAndFacilities`, `manageUserRole`) were updated to accept
+either group but this one was missed. Admin users could open the Edit
+Assignments modal — the PATCH 403'd and the client surfaced the
+generic "Failed to update assignment" toast.
+
+Fix: `!groups.includes('SuperAdmin') && !groups.includes('Admin')`.
+
+**Audit takeaway**: When adding a new privileged group, grep every
+`groups.includes(` in `amplify/functions/**` — the existing list is
+the canonical authority list for that group's reach.
 
 ---
 
