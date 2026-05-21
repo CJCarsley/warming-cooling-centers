@@ -10,6 +10,7 @@ import Point from '@arcgis/core/geometry/Point';
 import type { AdminFacility } from '../../types/facility';
 import { getFieldSchema } from '../../utils/fieldSchemaCache';
 import type { FieldDef } from '../../utils/fieldSchemaCache';
+import HoursEditor from '../../components/admin/HoursEditor';
 import styles from './AddFacilityModal.module.css';
 
 const FEATURE_LAYER_URL =
@@ -388,6 +389,18 @@ interface FieldInputProps {
 function FieldInput({ field, value, onChange, inputRef }: FieldInputProps) {
   const required = field.nullable === false;
   const id = `field-${field.name}`;
+
+  if (field.name === 'Hours') {
+    return (
+      <div className={styles.formGroup}>
+        <label htmlFor={id} className={styles.fieldLabel}>
+          {field.alias}
+          {required && <span className={styles.required} aria-hidden="true"> *</span>}
+        </label>
+        <HoursEditor id={id} value={value} onChange={(v) => onChange(field.name, v)} required={required} />
+      </div>
+    );
+  }
 
   if (field.domain?.type === 'codedValue' && field.domain.codedValues?.length) {
     return (

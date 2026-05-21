@@ -143,6 +143,22 @@
       "keepOpenActive": "استثناء إعادة الضبط الليلية نشط",
       "conflictWarning": "ملاحظة: تفعيل {{newType}} سيؤدي تلقائياً إلى إلغاء تفعيل {{clearType}}."
     },
+    "hours": {
+      "legend": "ساعات العمل",
+      "closed": "مغلق",
+      "openTime": "وقت فتح {{day}}",
+      "closeTime": "وقت إغلاق {{day}}",
+      "parseWarning": "تعذّر تحميل ساعات العمل الحالية إلى الجدول. سيؤدي تعديل أي يوم أدناه إلى استبدال هذه القيمة. القيمة الحالية:",
+      "day": {
+        "mon": "الاثنين",
+        "tue": "الثلاثاء",
+        "wed": "الأربعاء",
+        "thu": "الخميس",
+        "fri": "الجمعة",
+        "sat": "السبت",
+        "sun": "الأحد"
+      }
+    },
     "deleteFacility": {
       "link": "Delete",
       "confirmTitle": "Delete Facility",

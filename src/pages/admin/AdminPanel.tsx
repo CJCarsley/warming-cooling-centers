@@ -8,6 +8,7 @@ import { getFieldSchema } from '../../utils/fieldSchemaCache';
 import type { FieldDef } from '../../utils/fieldSchemaCache';
 import rawOutputs from '../../../amplify_outputs.json';
 import AddFacilityModal from './AddFacilityModal';
+import HoursEditor from '../../components/admin/HoursEditor';
 import styles from './AdminPanel.module.css';
 
 const FEATURE_LAYER_URL =
@@ -1040,6 +1041,18 @@ interface InlineFieldInputProps {
 function InlineFieldInput({ field, value, onChange, inputRef }: InlineFieldInputProps) {
   const id = `inline-${field.name}`;
   const required = field.nullable === false;
+
+  if (field.name === 'Hours') {
+    return (
+      <div className={styles.inlineFormGroup}>
+        <label htmlFor={id} className={styles.inlineFieldLabel}>
+          {field.alias}
+          {required && <span aria-hidden="true"> *</span>}
+        </label>
+        <HoursEditor id={id} value={value} onChange={(v) => onChange(field.name, v)} required={required} />
+      </div>
+    );
+  }
 
   if (field.domain?.type === 'codedValue' && field.domain.codedValues?.length) {
     return (
