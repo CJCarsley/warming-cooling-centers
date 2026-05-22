@@ -15,7 +15,7 @@ export default function Header() {
             alt={t('header.logoAlt')}
             className={styles.logo}
           />
-          <span className={styles.title}>{t('app.title')}</span>
+          <h1 className={styles.title}>{t('app.title')}</h1>
         </div>
 
         <div className={styles.controls}>

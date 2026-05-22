@@ -153,6 +153,18 @@ export default function MapViewComponent() {
     const search = new Search({ view });
     const locate = new Locate({ view });
 
+    // WCAG: ArcGIS Search renders an unlabeled <input>. Apply aria-label
+    // once the widget DOM is ready. Re-watch in case the widget re-renders.
+    const searchLabel = tMap('map.searchAria');
+    const applySearchLabel = () => {
+      const input = search.container?.querySelector?.('input.esri-search__input');
+      if (input && !input.getAttribute('aria-label')) {
+        input.setAttribute('aria-label', searchLabel);
+      }
+    };
+    void search.when().then(applySearchLabel);
+    const searchInputWatch = search.watch('viewModel.state', applySearchLabel);
+
     const basemapIds = ['topo-vector', 'dark-gray-vector', 'streets-navigation-vector', 'satellite'];
     const basemapGallery = new BasemapGallery({
       view,
@@ -199,6 +211,7 @@ export default function MapViewComponent() {
     return () => {
       basemapHandle.remove();
       searchHandle.remove();
+      searchInputWatch.remove();
       locateHandle.remove();
       search.destroy();
       locate.destroy();
@@ -209,6 +222,7 @@ export default function MapViewComponent() {
 
   return (
     <div className={styles.wrapper}>
+      <h2 className={styles.srOnly}>{tMap('map.pageHeading')}</h2>
       <div
         id={liveRegionId}
         aria-live="polite"
@@ -233,7 +247,7 @@ export default function MapViewComponent() {
         <div
           ref={mapContainerRef}
           className={styles.mapView}
-          role="application"
+          role="region"
           aria-label={tMap('map.ariaLabel')}
           tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
         />

@@ -12,11 +12,11 @@ export default function AccessibilityStatement() {
           ← {t('admin.login.backToMap')}
         </Link>
 
-        <h1 className={styles.heading}>{t('footer.accessibilityStatement')}</h1>
+        <h2 className={styles.heading}>{t('footer.accessibilityStatement')}</h2>
         <p className={styles.updated}>{t('accessibility.lastReviewed')}</p>
 
         <section aria-labelledby="commitment-heading">
-          <h2 id="commitment-heading">{t('accessibility.commitment.heading')}</h2>
+          <h3 id="commitment-heading">{t('accessibility.commitment.heading')}</h3>
           <p>
             <Trans
               i18nKey="accessibility.commitment.body"
@@ -34,7 +34,7 @@ export default function AccessibilityStatement() {
         </section>
 
         <section aria-labelledby="features-heading">
-          <h2 id="features-heading">{t('accessibility.features.heading')}</h2>
+          <h3 id="features-heading">{t('accessibility.features.heading')}</h3>
           <p>{t('accessibility.features.intro')}</p>
           <ul>
             <li>
@@ -88,7 +88,7 @@ export default function AccessibilityStatement() {
         </section>
 
         <section aria-labelledby="maps-heading">
-          <h2 id="maps-heading">{t('accessibility.map.heading')}</h2>
+          <h3 id="maps-heading">{t('accessibility.map.heading')}</h3>
           <p>
             <Trans
               i18nKey="accessibility.map.body"
@@ -98,7 +98,7 @@ export default function AccessibilityStatement() {
         </section>
 
         <section aria-labelledby="feedback-heading">
-          <h2 id="feedback-heading">{t('accessibility.feedback.heading')}</h2>
+          <h3 id="feedback-heading">{t('accessibility.feedback.heading')}</h3>
           <p>{t('accessibility.feedback.body')}</p>
           <ul>
             <li>
@@ -117,7 +117,7 @@ export default function AccessibilityStatement() {
         </section>
 
         <section aria-labelledby="ada-heading">
-          <h2 id="ada-heading">{t('accessibility.ada.heading')}</h2>
+          <h3 id="ada-heading">{t('accessibility.ada.heading')}</h3>
           <p>{t('accessibility.ada.body1')}</p>
           <p>
             <Trans

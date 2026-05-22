@@ -84,6 +84,7 @@ export default function FacilityPopup({ facility, facilityLocation, originPoint,
   const { t, i18n } = useTranslation();
   const { t: tMap } = useTranslation('map');
   const dialogRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const headingId = useId();
   const announcerId = useId();
   const descriptionId = useId();
@@ -162,7 +163,8 @@ export default function FacilityPopup({ facility, facilityLocation, originPoint,
     const getFocusable = (): HTMLElement[] =>
       Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector));
 
-    getFocusable()[0]?.focus();
+    // Focus the dialog heading first so AT announces the facility name on open
+    headingRef.current?.focus();
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -222,7 +224,12 @@ export default function FacilityPopup({ facility, facilityLocation, originPoint,
 
         {/* Header */}
         <div className={styles.dialogHeader}>
-          <h2 id={headingId} className={styles.facilityName}>
+          <h2
+            id={headingId}
+            ref={headingRef}
+            tabIndex={-1}
+            className={styles.facilityName}
+          >
             {tName || facility.Name}
           </h2>
           <button

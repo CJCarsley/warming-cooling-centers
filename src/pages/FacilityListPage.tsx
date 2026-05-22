@@ -103,7 +103,7 @@ export default function FacilityListPage() {
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
-        <h1 className={styles.heading}>{t('facilityList.heading')}</h1>
+        <h2 className={styles.heading}>{t('facilityList.heading')}</h2>
         <p className={styles.subheading}>{t('facilityList.subheading')}</p>
 
         {isLoading && (
@@ -128,7 +128,10 @@ export default function FacilityListPage() {
               {t('facilityList.count', { count: facilities.length })}
             </p>
             <div className={styles.tableWrapper}>
-              <table className={styles.table} aria-label={t('facilityList.tableAriaLabel')}>
+              <table className={styles.table}>
+                <caption className={styles.srOnly}>
+                  {t('facilityList.tableAriaLabel')}
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">{t('facility.name')}</th>

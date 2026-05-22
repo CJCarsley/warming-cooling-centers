@@ -14,6 +14,7 @@
   transition: top 0.1s;
 }
 
+.skipLink:focus,
 .skipLink:focus-visible {
   top: 0;
   outline: 3px solid var(--color-focus);

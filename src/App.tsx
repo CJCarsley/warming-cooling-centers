@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { Suspense, lazy, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDocumentDir } from './hooks/useDocumentDir';
 import SkipLink from './components/Layout/SkipLink';
@@ -34,12 +34,26 @@ function LoadingSpinner() {
 function AppShell() {
   const { i18n } = useTranslation();
   useDocumentDir(i18n.language);
+  const location = useLocation();
+  const mainRef = useRef<HTMLElement>(null);
+  const initialMount = useRef(true);
+
+  // Move focus to the main landmark on route change so AT announces the new
+  // page and keyboard users don't get stranded on the previous nav link.
+  // Skip the very first render so we don't steal focus on page load.
+  useEffect(() => {
+    if (initialMount.current) {
+      initialMount.current = false;
+      return;
+    }
+    mainRef.current?.focus();
+  }, [location.pathname]);
 
   return (
     <>
       <SkipLink />
       <Header />
-      <main id="main-content" tabIndex={-1}>
+      <main id="main-content" ref={mainRef} tabIndex={-1}>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/" element={<MapViewComponent />} />
