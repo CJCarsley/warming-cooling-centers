@@ -638,6 +638,44 @@ to en/es/vi/ar.
 `src/pages/admin/AdminPanel.tsx` (InlineFieldInput branch),
 `src/i18n/{en,es,vi,ar}.json`
 
+### feature/wcag-update-2.0 — merged (PRs #31 and #32 — 2026-05-22)
+
+WCAG 2.1 AA second pass focused on heading hierarchy, form labels,
+and focus management.
+
+**Heading hierarchy**:
+- Site title in Header `<span>` → `<h1>` (single page heading across SPA)
+- FacilityListPage "Active Facilities" `h1` → `h2`
+- AccessibilityStatement `h1` → `h2`; child `h2`s → `h3` to preserve order
+
+**Form labels** (axe "Missing form label"):
+- ArcGIS Search `input.esri-search__input` — set `aria-label` via
+  `search.when()` + a `viewModel.state` watcher
+- Calcite autocomplete `<input slot="hidden-form-input">` mounts
+  lazily when suggestions open. MutationObserver over `search.container`
+  catches the dynamic insert and labels it. PR #32 was the follow-up —
+  the initial `when()`/watch pass missed it because calcite hadn't
+  mounted the hidden input yet.
+
+**Focus management**:
+- FacilityPopup: focus the dialog `h2` (with `tabindex=-1`) on open
+  so AT announces the facility name first instead of the close button
+- Route changes: `<main>` receives focus on `location.pathname` change
+  (skip first mount) — `src/App.tsx`
+
+**Other AA polish**:
+- Map div: `role="application"` → `role="region"` (frees AT virtual cursor)
+- Map page: added sr-only `<h2>` page heading
+- MobileLegendOverlay: toggle button wrapped in `<h2>` for heading nav
+- LanguageSwitcher: `aria-label` on select; visible native-name label
+  marked `aria-hidden="true"` (decorative)
+- FacilityListPage table: `<caption className=srOnly>` replaces aria-label
+- SkipLink: added `:focus` alongside `:focus-visible` for broader AT
+- Touch targets (WCAG 2.5.8): `min-height: 24px` on nav links + lang select
+
+**i18n**: added `map.searchAria` and `map.pageHeading` keys in
+en/es/ar/vi (`src/i18n/{en,es,ar,vi}.map.json`).
+
 ### feature/auto-close-and-reminder — merged (PR #30 — 2026-05-21)
 
 Two new automated behaviours on top of the existing nightly reset:
