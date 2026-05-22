@@ -10,7 +10,7 @@ const LANGUAGES = [
 ];
 
 export default function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [announcement, setAnnouncement] = useState('');
   const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -44,8 +44,8 @@ export default function LanguageSwitcher() {
         {announcement}
       </div>
 
-      <label htmlFor="language-select" className={styles.label}>
-        {/* Show native label of current language */}
+      <label htmlFor="language-select" className={styles.label} aria-hidden="true">
+        {/* Decorative — shows native name of current language; real label via aria-label */}
         {LANGUAGES.find((l) => l.code === currentLang)?.nativeName ?? 'Language'}
       </label>
       <select
@@ -53,6 +53,7 @@ export default function LanguageSwitcher() {
         className={styles.select}
         value={currentLang}
         onChange={handleChange}
+        aria-label={t('language.selectAria')}
       >
         {LANGUAGES.map(({ code, nativeName }) => (
           <option key={code} value={code} lang={code}>

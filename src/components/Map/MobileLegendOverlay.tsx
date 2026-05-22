@@ -33,20 +33,22 @@ export default function MobileLegendOverlay() {
       role="complementary"
       aria-label={t('legend.title')}
     >
-      <button
-        type="button"
-        className={styles.toggleBtn}
-        onClick={toggle}
-        aria-expanded={isExpanded}
-        aria-controls={contentId}
-        aria-label={t('legend.toggleAria')}
-      >
-        <span>{t('legend.title')}</span>
-        <span
-          className={`${styles.chevron} ${isExpanded ? styles.chevronUp : ''}`}
-          aria-hidden="true"
-        />
-      </button>
+      <h2 className={styles.heading}>
+        <button
+          type="button"
+          className={styles.toggleBtn}
+          onClick={toggle}
+          aria-expanded={isExpanded}
+          aria-controls={contentId}
+          aria-label={t('legend.toggleAria')}
+        >
+          <span>{t('legend.title')}</span>
+          <span
+            className={`${styles.chevron} ${isExpanded ? styles.chevronUp : ''}`}
+            aria-hidden="true"
+          />
+        </button>
+      </h2>
 
       <div
         id={contentId}

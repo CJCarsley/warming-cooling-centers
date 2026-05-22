@@ -26,6 +26,13 @@
   }
 }
 
+/* Heading wrapping the toggle button — no visual styling, semantics only */
+.heading {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
 /* ─── Toggle button row (always visible) ─── */
 .toggleBtn {
   display: flex;

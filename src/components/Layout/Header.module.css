@@ -36,6 +36,7 @@
   font-weight: 700;
   color: #ffffff;
   line-height: 1.2;
+  margin: 0;
 }
 
 .controls {
@@ -58,7 +59,9 @@
 }
 
 .navLink {
-  display: block;
+  display: flex;
+  align-items: center;
+  min-height: 24px;
   padding: 0.4rem 0.875rem;
   color: #c8d8ea;
   text-decoration: none;
@@ -118,7 +121,8 @@
   }
 
   .navLink {
-    padding: 0.2rem 0.4rem;
+    min-height: 24px;
+    padding: 0.25rem 0.45rem;
     font-size: 0.75rem;
   }
 }
