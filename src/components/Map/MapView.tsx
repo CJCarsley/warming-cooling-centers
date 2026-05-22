@@ -153,17 +153,33 @@ export default function MapViewComponent() {
     const search = new Search({ view });
     const locate = new Locate({ view });
 
-    // WCAG: ArcGIS Search renders an unlabeled <input>. Apply aria-label
-    // once the widget DOM is ready. Re-watch in case the widget re-renders.
+    // WCAG: ArcGIS Search renders an unlabeled <input>, and the calcite
+    // suggestion autocomplete inserts a hidden form input (slot=
+    // "hidden-form-input") on demand. Both flag axe "missing form label".
+    // Apply aria-label to all matching inputs and watch for new ones via
+    // MutationObserver since calcite mounts them lazily.
     const searchLabel = tMap('map.searchAria');
+    const labelSearchInputs = (root: ParentNode) => {
+      root.querySelectorAll<HTMLInputElement>(
+        'input.esri-search__input, input[slot="hidden-form-input"]',
+      ).forEach((inp) => {
+        if (!inp.getAttribute('aria-label')) {
+          inp.setAttribute('aria-label', searchLabel);
+        }
+      });
+    };
     const applySearchLabel = () => {
-      const input = search.container?.querySelector?.('input.esri-search__input');
-      if (input && !input.getAttribute('aria-label')) {
-        input.setAttribute('aria-label', searchLabel);
-      }
+      if (search.container) labelSearchInputs(search.container);
     };
     void search.when().then(applySearchLabel);
     const searchInputWatch = search.watch('viewModel.state', applySearchLabel);
+
+    let searchObserver: MutationObserver | null = null;
+    void search.when().then(() => {
+      if (!search.container) return;
+      searchObserver = new MutationObserver(() => applySearchLabel());
+      searchObserver.observe(search.container, { childList: true, subtree: true });
+    });
 
     const basemapIds = ['topo-vector', 'dark-gray-vector', 'streets-navigation-vector', 'satellite'];
     const basemapGallery = new BasemapGallery({
@@ -212,6 +228,7 @@ export default function MapViewComponent() {
       basemapHandle.remove();
       searchHandle.remove();
       searchInputWatch.remove();
+      searchObserver?.disconnect();
       locateHandle.remove();
       search.destroy();
       locate.destroy();
