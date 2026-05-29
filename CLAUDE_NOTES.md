@@ -840,10 +840,15 @@ Capacity_Status→`CapacityBadge`. Labels via `FIELD_LABEL_KEYS`→`t()` (fallba
 field name). **Eligibility is now a labeled row** like the rest (was a bare
 paragraph) — intentional uniformity change.
 
-**Field universe**: editor offers `getFieldSchema() ∩ OUTFIELDS`
-(`src/config/map.ts`) minus `Warming_Active`/`Cooling_Active`. Restricting to
-`OUTFIELDS` guarantees the value is present on the pop-up `facility` object — to
-expose a new field in the pop-up, **add it to `OUTFIELDS` first**.
+**Field universe**: editor offers the **full live layer schema**
+(`getFieldSchema(true)` — cache-bypassing) minus `Warming_Active`/
+`Cooling_Active` (shown as the badge row). So newly-added feature-layer fields
+appear automatically. To make their values available, `useFeatureLayer` now
+queries `outFields: ['*']` (was the fixed `OUTFIELDS` list). The public pop-up
+labels unknown fields via the live schema `alias` (`PopupSections` fetches the
+cached schema), falling back to the raw field name; known fields keep their
+translated `facility.*` labels. (`OUTFIELDS` in `src/config/map.ts` is now
+unused by the map/pop-up path.)
 
 **Immediate effect (no refresh)**: Save calls `setPopupConfigCache` which
 notifies `usePopupConfig` subscribers, so an already-open map updates without

@@ -1,9 +1,10 @@
-import { useId } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FacilityAttributes } from '../../types/facility';
 import { useTranslateContent } from '../../hooks/useTranslateContent';
 import { usePopupConfig } from '../../hooks/usePopupConfig';
 import { DEFAULT_POPUP_LAYOUT, FIELD_LABEL_KEYS } from '../../utils/popupConfig';
+import { getFieldSchema } from '../../utils/fieldSchemaCache';
 import styles from './FacilityPopup.module.css';
 
 interface CapacityConfig {
@@ -50,14 +51,24 @@ export function CapacityBadge({ status }: { status: string | null }) {
 
 // One component instance per field so useTranslateContent is called once per
 // field in a stable order (config-driven loops must not call hooks inline).
-function PopupFieldRow({ fieldName, facility }: { fieldName: string; facility: FacilityAttributes }) {
+function PopupFieldRow({
+  fieldName,
+  facility,
+  alias,
+}: {
+  fieldName: string;
+  facility: FacilityAttributes;
+  alias?: string;
+}) {
   const { t, i18n } = useTranslation();
   const raw = facility[fieldName as keyof FacilityAttributes];
   const text = raw == null ? '' : String(raw);
   const { translatedText } = useTranslateContent(text, i18n.language);
 
+  // Known fields use their translated i18n label; newly-added layer fields fall
+  // back to the live schema alias, then the raw field name.
   const labelKey = FIELD_LABEL_KEYS[fieldName];
-  const label = labelKey ? t(labelKey) : fieldName;
+  const label = labelKey ? t(labelKey) : alias ?? fieldName;
   const na = <span className={styles.naText}>{t('common.notAvailable')}</span>;
 
   let value: React.ReactNode;
@@ -104,6 +115,22 @@ export default function PopupSections({ facility, headingLevel: H }: PopupSectio
   const saved = usePopupConfig();
   const idPrefix = useId();
 
+  // Alias lookup for fields outside FIELD_LABEL_KEYS (e.g. newly-added layer
+  // fields). Public, module-cached schema fetch — known fields don't need it.
+  const [aliases, setAliases] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    void getFieldSchema()
+      .then((schema) => {
+        if (cancelled) return;
+        setAliases(Object.fromEntries(schema.map((f) => [f.name, f.alias])));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Saved layout (literal titles) wins; otherwise the translated default layout.
   const sections =
     saved.length > 0
@@ -119,7 +146,7 @@ export default function PopupSections({ facility, headingLevel: H }: PopupSectio
             <H id={headingId} className={styles.sectionHeading}>{section.title}</H>
             <dl className={styles.dl}>
               {section.fields.map((name) => (
-                <PopupFieldRow key={name} fieldName={name} facility={facility} />
+                <PopupFieldRow key={name} fieldName={name} facility={facility} alias={aliases[name]} />
               ))}
             </dl>
           </section>

@@ -8,7 +8,6 @@ import {
   setPopupConfigCache,
   type PopupSection,
 } from '../../utils/popupConfig';
-import { OUTFIELDS } from '../../config/map';
 import styles from './UpdatePopupModal.module.css';
 
 interface Props {
@@ -22,7 +21,6 @@ interface Props {
 
 // Status fields are surfaced as the badge row, not as info rows.
 const DISPLAY_EXCLUDE = new Set(['Warming_Active', 'Cooling_Active']);
-const OUTFIELD_SET = new Set<string>(OUTFIELDS);
 
 function move<T>(arr: T[], from: number, to: number): T[] {
   if (to < 0 || to >= arr.length) return arr;
@@ -96,9 +94,9 @@ export default function UpdatePopupModal({
           getPublicPopupConfig(),
         ]);
         if (cancelled) return;
-        const available = schema.filter(
-          (f) => OUTFIELD_SET.has(f.name) && !DISPLAY_EXCLUDE.has(f.name),
-        );
+        // Reflect whatever is live in the feature layer (getFieldSchema(true)
+        // bypasses the cache), minus the status fields shown as the badge row.
+        const available = schema.filter((f) => !DISPLAY_EXCLUDE.has(f.name));
         const names = new Set(available.map((f) => f.name));
         setAllFields(available);
 
