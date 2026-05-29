@@ -6,7 +6,7 @@ import SpatialReference from '@arcgis/core/geometry/SpatialReference';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 import UniqueValueRenderer from '@arcgis/core/renderers/UniqueValueRenderer';
 import PictureMarkerSymbol from '@arcgis/core/symbols/PictureMarkerSymbol';
-import { MAP_CONFIG, OUTFIELDS } from '../config/map';
+import { MAP_CONFIG } from '../config/map';
 import type { FacilityAttributes } from '../types/facility';
 
 function svgUri(svg: string): string {
@@ -92,7 +92,8 @@ export function useFeatureLayer(view: MapView | null): UseFeatureLayerResult {
 
     const featureLayer = new FeatureLayer({
       url: MAP_CONFIG.featureLayerUrl,
-      outFields: [...OUTFIELDS],
+      // Load every field so any admin-configured pop-up field has a value.
+      outFields: ['*'],
       renderer: buildRenderer(),
       popupEnabled: false,
       definitionExpression: "Warming_Active = 'Yes' OR Cooling_Active = 'Yes'",
@@ -105,7 +106,7 @@ export function useFeatureLayer(view: MapView | null): UseFeatureLayerResult {
       await featureLayer.load();
       const result = await featureLayer.queryFeatures({
         where: '1=1',
-        outFields: [...OUTFIELDS],
+        outFields: ['*'],
         returnGeometry: true,
         outSpatialReference: new SpatialReference({ wkid: 4326 }),
       });
