@@ -10,6 +10,7 @@ import { getFieldConfig, applyFieldConfig } from '../../utils/fieldConfig';
 import rawOutputs from '../../../amplify_outputs.json';
 import AddFacilityModal from './AddFacilityModal';
 import UpdateFieldsModal from './UpdateFieldsModal';
+import UpdatePopupModal from './UpdatePopupModal';
 import HoursEditor from '../../components/admin/HoursEditor';
 import styles from './AdminPanel.module.css';
 
@@ -81,6 +82,7 @@ export default function AdminPanel({
   const [announcement, setAnnouncement] = useState('');
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [fieldsModalOpen, setFieldsModalOpen] = useState(false);
+  const [popupModalOpen, setPopupModalOpen] = useState(false);
   const [fieldConfig, setFieldConfig] = useState<string[] | null>(null);
   const [requestAccessSent, setRequestAccessSent] = useState(() => {
     try {
@@ -150,6 +152,7 @@ export default function AdminPanel({
   const announcerRef = useRef<HTMLDivElement>(null);
   const addNewBtnRef = useRef<HTMLButtonElement>(null);
   const updateFieldsBtnRef = useRef<HTMLButtonElement>(null);
+  const updatePopupBtnRef = useRef<HTMLButtonElement>(null);
   const firstEditFieldRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
 
   useEffect(() => {
@@ -612,6 +615,14 @@ export default function AdminPanel({
                   {t('admin.fieldConfig.navLink')}
                 </button>
               )}
+              <button
+                ref={updatePopupBtnRef}
+                type="button"
+                className={styles.adminNavLink}
+                onClick={() => setPopupModalOpen(true)}
+              >
+                {t('admin.popupConfig.navLink')}
+              </button>
             </nav>
           )}
         </div>
@@ -1021,6 +1032,17 @@ export default function AdminPanel({
           apiBase={resolvedApiBase}
           idToken={idToken}
           triggerRef={updateFieldsBtnRef}
+        />
+      )}
+
+      {(isSuperAdmin || isAdmin) && (
+        <UpdatePopupModal
+          isOpen={popupModalOpen}
+          onClose={() => setPopupModalOpen(false)}
+          onSaved={() => setAnnouncement(t('admin.popupConfig.saveSuccess'))}
+          apiBase={resolvedApiBase}
+          idToken={idToken}
+          triggerRef={updatePopupBtnRef}
         />
       )}
     </div>
