@@ -153,6 +153,8 @@ dep: custom stack → Lambda stack. That is fine. These create cycles:
 | `manageUserRole` | POST /admin/users/role | Grant or remove the `Admin` Cognito group for a target user; blocks removing Admin from `cjcarsley@douglascounty-ne.gov`; only `Admin` group manageable (not `SuperAdmin`) |
 | `getFieldConfig` | GET /admin/field-config | Return the saved edit-form field config (ordered list of enabled field names) from the reserved `__field_config__` DynamoDB row; any authenticated admin |
 | `setFieldConfig` | PATCH /admin/field-config | Persist the edit-form field config to DynamoDB (**SuperAdmin only**, claims-enforced) |
+| `getPopupConfig` | GET /admin/popup-config | Return the saved map pop-up layout (sections + ordered fields) from the `__popup_config__` DynamoDB row. **PUBLIC — no Cognito authorizer** (the public map pop-up reads it) |
+| `setPopupConfig` | PATCH /admin/popup-config | Persist the pop-up layout to DynamoDB (**SuperAdmin or Admin**, claims-enforced) |
 
 **SES config** (in `updateStatus/handler.ts`): sender `do-not-reply@dcgis.org`, region `us-east-1`.
 Recipients are hardcoded in the handler — update there if the notification list changes.
@@ -167,10 +169,12 @@ Recipients are hardcoded in the handler — update there if the notification lis
 Table is managed **outside CDK** (was created by feature/auto-reset branch Amplify deployment with
 RETAIN policy). Lambda functions reference it by hardcoded name `'FacilityOverrides'` in their
 `resource.ts` environment blocks. IAM policies use `Stack.of(fn).formatArn(...)` with the literal.
-The table also holds one **reserved non-facility row** with PK `'__field_config__'` (attribute
+The table also holds **reserved non-facility rows**: PK `'__field_config__'` (attribute
 `fieldConfig`: List of field-name strings, `fieldConfigUpdatedAt`: Number) — the edit-form field
-config (feature/order-fields). Scans in `autoReset`/`autoClose` filter on `keepOpen`, so this row
-never matches them.
+config (feature/order-fields); and PK `'__popup_config__'` (attribute `popupConfig`: List of
+`{id,title,fields[]}` section objects, `popupConfigUpdatedAt`: Number) — the public map pop-up
+layout (feature/popup-editor). Scans in `autoReset`/`autoClose` filter on `keepOpen`, so these rows
+never match them.
 
 **Shared ArcGIS token utility**: `amplify/functions/shared/arcgisToken.ts` exports `getArcGISToken()`.
 Reads `ARCGIS_CLIENT_ID` / `ARCGIS_CLIENT_SECRET` from env. Import with `'../shared/arcgisToken'`
@@ -800,6 +804,61 @@ in the load effect).
 
 **Deploy note**: the two new Lambdas + route require an Amplify deploy
 before the feature is live.
+
+### feature/popup-editor — 2026-05-29
+
+Admin-configurable **map pop-up** layout. The order-fields work made the edit
+form configurable but the public pop-up still hard-coded its 5 sections — this
+closes that gap. A new **"Edit Pop-up"** admin link (visible to **SuperAdmin or
+Admin**; sits under Update Fields for SuperAdmin, under User Management for
+Admin) opens a floating `<dialog>`:
+- **Add Section** button appends a section with a free-text title input.
+- Each section has a **＋** toggle that lists only **unassigned** fields; click
+  to assign. Assigned fields show a **−** to remove.
+- Fields reorder **within a section** by HTML5 drag (+ arrow-key fallback);
+  whole **sections** reorder by dragging the section handle (+ arrow keys).
+
+**Data model**: `PopupSection { id, title, fields[] }[]`. Saved layout uses
+**literal** titles; when nothing is saved the pop-up renders
+`DEFAULT_POPUP_LAYOUT` (the original 5 sections) with **translated** titles
+(`popup.sections.*`). The editor **pre-fills** the default layout on first open,
+resolving i18n titles to literal strings (decision: customizing → literal,
+non-translated titles; accepted).
+
+**Public render path**: `GET /admin/popup-config` is wired **without the Cognito
+authorizer** (the map pop-up is public) — mirrors the `/arcgis-token` public
+route. `PATCH /admin/popup-config` keeps the authorizer; the handler gates on
+`SuperAdmin || Admin`. No new table/auth-trigger → no CDK circular-dep patterns.
+
+**Rendering refactor**: extracted `src/components/Map/PopupSections.tsx` (shared
+by `FacilityPopup` and `FacilityDetails`). It reads `usePopupConfig()` and
+renders sections dynamically; one `PopupFieldRow` child per field calls
+`useTranslateContent` once (config-driven loop can't call hooks inline).
+Special-cased by field name (reused from the old pop-up): Phone→`tel:`,
+Email→`mailto:`, Website→external link, Capacity→"{n} spots",
+Capacity_Status→`CapacityBadge`. Labels via `FIELD_LABEL_KEYS`→`t()` (fallback
+field name). **Eligibility is now a labeled row** like the rest (was a bare
+paragraph) — intentional uniformity change.
+
+**Field universe**: editor offers `getFieldSchema() ∩ OUTFIELDS`
+(`src/config/map.ts`) minus `Warming_Active`/`Cooling_Active`. Restricting to
+`OUTFIELDS` guarantees the value is present on the pop-up `facility` object — to
+expose a new field in the pop-up, **add it to `OUTFIELDS` first**.
+
+**Immediate effect (no refresh)**: Save calls `setPopupConfigCache` which
+notifies `usePopupConfig` subscribers, so an already-open map updates without
+reload.
+
+**Key files**: `amplify/functions/{getPopupConfig,setPopupConfig}/`,
+`amplify/backend.ts`, `src/utils/popupConfig.ts`,
+`src/hooks/usePopupConfig.ts`, `src/components/Map/PopupSections.tsx`,
+`src/components/Map/{FacilityPopup,FacilityDetails}.tsx`,
+`src/pages/admin/UpdatePopupModal.{tsx,module.css}`,
+`src/pages/admin/AdminPanel.tsx`, `src/i18n/{en,es,vi,ar}.json`
+(`admin.popupConfig.*`).
+
+**Deploy note**: 2 new Lambdas + the public GET route require an Amplify deploy
+before the live site reflects saved layouts.
 
 ---
 

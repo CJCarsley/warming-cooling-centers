@@ -28,6 +28,8 @@ import { getFacilityNotifications } from './functions/getFacilityNotifications/r
 import { setFacilityNotifications } from './functions/setFacilityNotifications/resource';
 import { getFieldConfig } from './functions/getFieldConfig/resource';
 import { setFieldConfig } from './functions/setFieldConfig/resource';
+import { getPopupConfig } from './functions/getPopupConfig/resource';
+import { setPopupConfig } from './functions/setPopupConfig/resource';
 import { deleteFacility } from './functions/deleteFacility/resource';
 import { manageUserRole } from './functions/manageUserRole/resource';
 import { getArcGISPublicToken } from './functions/getArcGISPublicToken/resource';
@@ -50,6 +52,8 @@ const backend = defineBackend({
   setFacilityNotifications,
   getFieldConfig,
   setFieldConfig,
+  getPopupConfig,
+  setPopupConfig,
   deleteFacility,
   manageUserRole,
   getArcGISPublicToken,
@@ -92,6 +96,8 @@ const getFacilityNotificationsFn = backend.getFacilityNotifications.resources.la
 const setFacilityNotificationsFn = backend.setFacilityNotifications.resources.lambda as LambdaFunction;
 const getFieldConfigFn = backend.getFieldConfig.resources.lambda as LambdaFunction;
 const setFieldConfigFn = backend.setFieldConfig.resources.lambda as LambdaFunction;
+const getPopupConfigFn = backend.getPopupConfig.resources.lambda as LambdaFunction;
+const setPopupConfigFn = backend.setPopupConfig.resources.lambda as LambdaFunction;
 const deleteFacilityFn = backend.deleteFacility.resources.lambda as LambdaFunction;
 const manageUserRoleFn = backend.manageUserRole.resources.lambda as LambdaFunction;
 const postConfirmationFn = backend.postConfirmation.resources.lambda as LambdaFunction;
@@ -230,6 +236,8 @@ for (const [fn, actions] of [
   [setFacilityNotificationsFn, ['dynamodb:UpdateItem']],
   [getFieldConfigFn, ['dynamodb:GetItem']],
   [setFieldConfigFn, ['dynamodb:UpdateItem']],
+  [getPopupConfigFn, ['dynamodb:GetItem']],
+  [setPopupConfigFn, ['dynamodb:UpdateItem']],
   [addFacilityFn, ['dynamodb:UpdateItem']],
   [deleteFacilityFn, ['dynamodb:DeleteItem']],
 ] as [LambdaFunction, string[]][]) {
@@ -386,6 +394,20 @@ fieldConfigResource.addMethod(
 fieldConfigResource.addMethod(
   'PATCH',
   new LambdaIntegration(backend.setFieldConfig.resources.lambda),
+  { authorizer },
+);
+
+// GET /admin/popup-config — read saved map pop-up layout (PUBLIC: no authorizer,
+//   the public map pop-up reads it)
+// PATCH /admin/popup-config — save the layout (SuperAdmin or Admin, enforced in handler)
+const popupConfigResource = adminResource.addResource('popup-config');
+popupConfigResource.addMethod(
+  'GET',
+  new LambdaIntegration(backend.getPopupConfig.resources.lambda),
+);
+popupConfigResource.addMethod(
+  'PATCH',
+  new LambdaIntegration(backend.setPopupConfig.resources.lambda),
   { authorizer },
 );
 
