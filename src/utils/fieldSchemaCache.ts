@@ -31,9 +31,9 @@ const SYSTEM_FIELDS = new Set([
 let cachedSchema: FieldDef[] | null = null;
 let fetchPromise: Promise<FieldDef[]> | null = null;
 
-export async function getFieldSchema(): Promise<FieldDef[]> {
-  if (cachedSchema) return cachedSchema;
-  if (fetchPromise) return fetchPromise;
+export async function getFieldSchema(forceRefresh = false): Promise<FieldDef[]> {
+  if (!forceRefresh && cachedSchema) return cachedSchema;
+  if (!forceRefresh && fetchPromise) return fetchPromise;
 
   fetchPromise = getPublicArcGISToken()
     .then((token) => fetch(`${FEATURE_LAYER_URL}?f=json&token=${encodeURIComponent(token)}`))

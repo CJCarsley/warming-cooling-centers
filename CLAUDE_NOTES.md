@@ -151,6 +151,8 @@ dep: custom stack → Lambda stack. That is fine. These create cycles:
 | `setFacilityNotifications` | PATCH /facilities/notifications | Write `notificationEmails` to DynamoDB (comma-separated addresses) |
 | `deleteFacility` | POST /facility/delete | ArcGIS `applyEdits` delete, remove ObjectID from caller's Cognito attribute, delete DynamoDB item |
 | `manageUserRole` | POST /admin/users/role | Grant or remove the `Admin` Cognito group for a target user; blocks removing Admin from `cjcarsley@douglascounty-ne.gov`; only `Admin` group manageable (not `SuperAdmin`) |
+| `getFieldConfig` | GET /admin/field-config | Return the saved edit-form field config (ordered list of enabled field names) from the reserved `__field_config__` DynamoDB row; any authenticated admin |
+| `setFieldConfig` | PATCH /admin/field-config | Persist the edit-form field config to DynamoDB (**SuperAdmin only**, claims-enforced) |
 
 **SES config** (in `updateStatus/handler.ts`): sender `do-not-reply@dcgis.org`, region `us-east-1`.
 Recipients are hardcoded in the handler — update there if the notification list changes.
@@ -165,6 +167,10 @@ Recipients are hardcoded in the handler — update there if the notification lis
 Table is managed **outside CDK** (was created by feature/auto-reset branch Amplify deployment with
 RETAIN policy). Lambda functions reference it by hardcoded name `'FacilityOverrides'` in their
 `resource.ts` environment blocks. IAM policies use `Stack.of(fn).formatArn(...)` with the literal.
+The table also holds one **reserved non-facility row** with PK `'__field_config__'` (attribute
+`fieldConfig`: List of field-name strings, `fieldConfigUpdatedAt`: Number) — the edit-form field
+config (feature/order-fields). Scans in `autoReset`/`autoClose` filter on `keepOpen`, so this row
+never matches them.
 
 **Shared ArcGIS token utility**: `amplify/functions/shared/arcgisToken.ts` exports `getArcGISToken()`.
 Reads `ARCGIS_CLIENT_ID` / `ARCGIS_CLIENT_SECRET` from env. Import with `'../shared/arcgisToken'`
@@ -751,6 +757,49 @@ Fix: `!groups.includes('SuperAdmin') && !groups.includes('Admin')`.
 **Audit takeaway**: When adding a new privileged group, grep every
 `groups.includes(` in `amplify/functions/**` — the existing list is
 the canonical authority list for that group's reach.
+
+### feature/order-fields — 2026-05-29
+
+SuperAdmin-configurable edit-form field set + ordering. A new **Update
+Fields** link (SuperAdmin only) sits under the User Management link and
+opens a floating `<dialog>` split into two views:
+- **Top** — the saved field order, rendered as draggable button "chips".
+  Reorder via HTML5 drag-and-drop **or** arrow keys (keyboard-accessible;
+  `aria-live` announces moves).
+- **Bottom** — freshly reloaded layer fields (`getFieldSchema(true)`)
+  with a checkbox each. Enabling a field appends it to the bottom of the
+  top order; disabling removes it.
+
+Save persists; Cancel discards. The config is an **ordered list of
+enabled field names** that drives both the inline Edit form on AdminPanel
+and the Add New Facility modal (`applyFieldConfig` orders + filters the
+schema). When **no config has been saved**, every editable field shows in
+schema order (legacy behavior preserved); the modal pre-enables all
+fields so its initial state matches the effective edit view.
+
+**Persistence**: DynamoDB reserved row `__field_config__` in
+`FacilityOverrides` (see DynamoDB table note). Two new Lambdas:
+`getFieldConfig` (GET, any admin) and `setFieldConfig` (PATCH, SuperAdmin
+claims-enforced). No new table and no auth triggers → none of the CDK
+circular-dependency patterns apply; wiring is the standard
+`LambdaIntegration` on the existing API + the shared DynamoDB IAM loop.
+
+**Immediate effect (no refresh)**: on Save, the client updates a
+module-level cache (`setFieldConfigCache`) **and** AdminPanel's
+`fieldConfig` state via `onSaved`, so the inline Edit view re-derives and
+the next Add modal open reads the new config — no page reload. All admins
+pick up a new config on their next AdminPanel load (`getFieldConfig` runs
+in the load effect).
+
+**Key files**: `amplify/functions/{getFieldConfig,setFieldConfig}/`,
+`amplify/backend.ts`, `src/utils/fieldConfig.ts`,
+`src/utils/fieldSchemaCache.ts` (added `forceRefresh` arg),
+`src/pages/admin/UpdateFieldsModal.{tsx,module.css}`,
+`src/pages/admin/AdminPanel.tsx`, `src/pages/admin/AddFacilityModal.tsx`,
+`src/i18n/{en,es,vi,ar}.json` (`admin.fieldConfig.*`).
+
+**Deploy note**: the two new Lambdas + route require an Amplify deploy
+before the feature is live.
 
 ---
 

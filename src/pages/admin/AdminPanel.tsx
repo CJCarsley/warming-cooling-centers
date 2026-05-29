@@ -6,8 +6,10 @@ import { getPublicArcGISToken } from '../../utils/arcgisToken';
 import type { AdminFacility, EditStatusField } from '../../types/facility';
 import { getFieldSchema } from '../../utils/fieldSchemaCache';
 import type { FieldDef } from '../../utils/fieldSchemaCache';
+import { getFieldConfig, applyFieldConfig } from '../../utils/fieldConfig';
 import rawOutputs from '../../../amplify_outputs.json';
 import AddFacilityModal from './AddFacilityModal';
+import UpdateFieldsModal from './UpdateFieldsModal';
 import HoursEditor from '../../components/admin/HoursEditor';
 import styles from './AdminPanel.module.css';
 
@@ -78,6 +80,8 @@ export default function AdminPanel({
   const [keepOpenPendingIds, setKeepOpenPendingIds] = useState<Set<number>>(new Set());
   const [announcement, setAnnouncement] = useState('');
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [fieldsModalOpen, setFieldsModalOpen] = useState(false);
+  const [fieldConfig, setFieldConfig] = useState<string[] | null>(null);
   const [requestAccessSent, setRequestAccessSent] = useState(() => {
     try {
       return sessionStorage.getItem(REQUEST_ACCESS_KEY) === '1';
@@ -145,6 +149,7 @@ export default function AdminPanel({
   const deleteCancelBtnRef = useRef<HTMLButtonElement>(null);
   const announcerRef = useRef<HTMLDivElement>(null);
   const addNewBtnRef = useRef<HTMLButtonElement>(null);
+  const updateFieldsBtnRef = useRef<HTMLButtonElement>(null);
   const firstEditFieldRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
 
   useEffect(() => {
@@ -197,6 +202,9 @@ export default function AdminPanel({
           const keepOpenData = (await keepOpenRes.json()) as { keepOpenIds: number[] };
           if (!cancelled) setKeepOpenIds(new Set(keepOpenData.keepOpenIds));
         }
+
+        const cfg = await getFieldConfig(resolvedApiBase, tok);
+        if (!cancelled) setFieldConfig(cfg);
       } catch (err) {
         if (!cancelled) setLoadError(t('common.error'));
         console.error('AdminPanel load error:', err);
@@ -590,10 +598,20 @@ export default function AdminPanel({
         <div>
           <h1 className={styles.welcome}>{t('admin.panel.welcome', { email })}</h1>
           {(isSuperAdmin || isAdmin) && (
-            <nav aria-label={t('admin.panel.adminNavLabel')}>
+            <nav aria-label={t('admin.panel.adminNavLabel')} className={styles.adminNav}>
               <Link to="/admin/users" className={styles.adminNavLink}>
                 {t('admin.users.navLink')}
               </Link>
+              {isSuperAdmin && (
+                <button
+                  ref={updateFieldsBtnRef}
+                  type="button"
+                  className={styles.adminNavLink}
+                  onClick={() => setFieldsModalOpen(true)}
+                >
+                  {t('admin.fieldConfig.navLink')}
+                </button>
+              )}
             </nav>
           )}
         </div>
@@ -797,7 +815,7 @@ export default function AdminPanel({
                         {!isExpandLoading && !expandError && expandedRawAttrs && (
                           <>
                             <div className={styles.editFieldList}>
-                              {expandedFields.map((f, idx) => (
+                              {applyFieldConfig(expandedFields, fieldConfig).map((f, idx) => (
                                 <InlineFieldInput
                                   key={f.name}
                                   field={f}
@@ -991,6 +1009,20 @@ export default function AdminPanel({
         idToken={idToken}
         triggerRef={addNewBtnRef}
       />
+
+      {isSuperAdmin && (
+        <UpdateFieldsModal
+          isOpen={fieldsModalOpen}
+          onClose={() => setFieldsModalOpen(false)}
+          onSaved={(fields) => {
+            setFieldConfig(fields);
+            setAnnouncement(t('admin.fieldConfig.saveSuccess'));
+          }}
+          apiBase={resolvedApiBase}
+          idToken={idToken}
+          triggerRef={updateFieldsBtnRef}
+        />
+      )}
     </div>
   );
 }

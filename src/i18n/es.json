@@ -211,6 +211,28 @@
       "sent": "Solicitud de acceso enviada. Esperando aprobación.",
       "error": "Error al enviar la solicitud de acceso. Por favor, inténtelo de nuevo."
     },
+    "fieldConfig": {
+      "navLink": "Actualizar campos",
+      "title": "Actualizar campos del formulario de edición",
+      "loading": "Cargando campos…",
+      "loadError": "Error al cargar los campos. Por favor, inténtelo de nuevo.",
+      "orderHeading": "Orden de los campos",
+      "orderHint": "Estos campos aparecen en el formulario de edición del administrador. Arrastre para reordenar o seleccione un campo y use las teclas de flecha.",
+      "orderEmpty": "Aún no hay campos habilitados. Habilite campos abajo para agregarlos aquí.",
+      "enableHeading": "Campos disponibles",
+      "enableHint": "Marque un campo para mostrarlo en el formulario de edición del administrador; desmárquelo para ocultarlo.",
+      "chipAria": "{{field}}, posición {{position}} de {{total}}. Use las teclas de flecha para reordenar.",
+      "reorderRole": "campo arrastrable",
+      "movedUp": "{{field}} movido hacia arriba",
+      "movedDown": "{{field}} movido hacia abajo",
+      "enabled": "{{field}} habilitado",
+      "disabled": "{{field}} deshabilitado",
+      "save": "Guardar",
+      "saving": "Guardando…",
+      "cancel": "Cancelar",
+      "saveSuccess": "Configuración de campos guardada.",
+      "saveError": "Error al guardar la configuración de campos. Por favor, inténtelo de nuevo."
+    },
     "addFacility": {
       "buttonLabel": "+ Agregar Nuevo",
       "buttonAriaLabel": "Agregar un nuevo centro",
