@@ -198,6 +198,28 @@
       "sentLabel": "Đã gửi yêu cầu",
       "sent": "Đã gửi yêu cầu truy cập. Đang chờ phê duyệt.",
       "error": "Không thể gửi yêu cầu truy cập. Vui lòng thử lại."
+    },
+    "fieldConfig": {
+      "navLink": "Cập nhật trường",
+      "title": "Cập nhật các trường biểu mẫu chỉnh sửa",
+      "loading": "Đang tải các trường…",
+      "loadError": "Không thể tải các trường. Vui lòng thử lại.",
+      "orderHeading": "Thứ tự trường",
+      "orderHint": "Các trường này xuất hiện trong biểu mẫu chỉnh sửa của quản trị viên. Kéo để sắp xếp lại, hoặc chọn một trường và nhấn các phím mũi tên.",
+      "orderEmpty": "Chưa có trường nào được bật. Bật các trường bên dưới để thêm vào đây.",
+      "enableHeading": "Các trường có sẵn",
+      "enableHint": "Đánh dấu một trường để hiển thị trong biểu mẫu chỉnh sửa của quản trị viên; bỏ đánh dấu để ẩn.",
+      "chipAria": "{{field}}, vị trí {{position}} trên {{total}}. Dùng các phím mũi tên để sắp xếp lại.",
+      "reorderRole": "trường có thể kéo",
+      "movedUp": "{{field}} đã di chuyển lên",
+      "movedDown": "{{field}} đã di chuyển xuống",
+      "enabled": "{{field}} đã bật",
+      "disabled": "{{field}} đã tắt",
+      "save": "Lưu",
+      "saving": "Đang lưu…",
+      "cancel": "Hủy",
+      "saveSuccess": "Đã lưu cấu hình trường.",
+      "saveError": "Không thể lưu cấu hình trường. Vui lòng thử lại."
     }
   },
   "accessibility": {

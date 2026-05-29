@@ -26,6 +26,8 @@ import { addFacility } from './functions/addFacility/resource';
 import { updateFacilityAttributes } from './functions/updateFacilityAttributes/resource';
 import { getFacilityNotifications } from './functions/getFacilityNotifications/resource';
 import { setFacilityNotifications } from './functions/setFacilityNotifications/resource';
+import { getFieldConfig } from './functions/getFieldConfig/resource';
+import { setFieldConfig } from './functions/setFieldConfig/resource';
 import { deleteFacility } from './functions/deleteFacility/resource';
 import { manageUserRole } from './functions/manageUserRole/resource';
 import { getArcGISPublicToken } from './functions/getArcGISPublicToken/resource';
@@ -46,6 +48,8 @@ const backend = defineBackend({
   updateFacilityAttributes,
   getFacilityNotifications,
   setFacilityNotifications,
+  getFieldConfig,
+  setFieldConfig,
   deleteFacility,
   manageUserRole,
   getArcGISPublicToken,
@@ -86,6 +90,8 @@ const addFacilityFn = backend.addFacility.resources.lambda as LambdaFunction;
 const updateFacilityAttrsFn = backend.updateFacilityAttributes.resources.lambda as LambdaFunction;
 const getFacilityNotificationsFn = backend.getFacilityNotifications.resources.lambda as LambdaFunction;
 const setFacilityNotificationsFn = backend.setFacilityNotifications.resources.lambda as LambdaFunction;
+const getFieldConfigFn = backend.getFieldConfig.resources.lambda as LambdaFunction;
+const setFieldConfigFn = backend.setFieldConfig.resources.lambda as LambdaFunction;
 const deleteFacilityFn = backend.deleteFacility.resources.lambda as LambdaFunction;
 const manageUserRoleFn = backend.manageUserRole.resources.lambda as LambdaFunction;
 const postConfirmationFn = backend.postConfirmation.resources.lambda as LambdaFunction;
@@ -222,6 +228,8 @@ for (const [fn, actions] of [
   [updateStatusFn, ['dynamodb:GetItem']],
   [getFacilityNotificationsFn, ['dynamodb:GetItem']],
   [setFacilityNotificationsFn, ['dynamodb:UpdateItem']],
+  [getFieldConfigFn, ['dynamodb:GetItem']],
+  [setFieldConfigFn, ['dynamodb:UpdateItem']],
   [addFacilityFn, ['dynamodb:UpdateItem']],
   [deleteFacilityFn, ['dynamodb:DeleteItem']],
 ] as [LambdaFunction, string[]][]) {
@@ -366,6 +374,20 @@ adminResource
     new LambdaIntegration(backend.requestAccess.resources.lambda),
     { authorizer },
   );
+
+// GET /admin/field-config — read saved edit-form field order/enablement (any admin)
+// PATCH /admin/field-config — save the configuration (SuperAdmin only, enforced in handler)
+const fieldConfigResource = adminResource.addResource('field-config');
+fieldConfigResource.addMethod(
+  'GET',
+  new LambdaIntegration(backend.getFieldConfig.resources.lambda),
+  { authorizer },
+);
+fieldConfigResource.addMethod(
+  'PATCH',
+  new LambdaIntegration(backend.setFieldConfig.resources.lambda),
+  { authorizer },
+);
 
 // ── EventBridge rule: nightly reset at midnight CT (06:00 UTC; ~1h DST drift accepted) ──
 //

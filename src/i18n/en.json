@@ -212,6 +212,28 @@
       "sent": "Access request sent. Awaiting approval.",
       "error": "Failed to send access request. Please try again."
     },
+    "fieldConfig": {
+      "navLink": "Update Fields",
+      "title": "Update Edit Form Fields",
+      "loading": "Loading fields…",
+      "loadError": "Failed to load fields. Please try again.",
+      "orderHeading": "Field Order",
+      "orderHint": "These fields appear in the Admin edit form. Drag to reorder, or focus a field and press the arrow keys.",
+      "orderEmpty": "No fields enabled yet. Enable fields below to add them here.",
+      "enableHeading": "Available Fields",
+      "enableHint": "Check a field to show it in the Admin edit form; uncheck to hide it.",
+      "chipAria": "{{field}}, position {{position}} of {{total}}. Use the arrow keys to reorder.",
+      "reorderRole": "draggable field",
+      "movedUp": "{{field}} moved up",
+      "movedDown": "{{field}} moved down",
+      "enabled": "{{field}} enabled",
+      "disabled": "{{field}} disabled",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "saveSuccess": "Field configuration saved.",
+      "saveError": "Failed to save field configuration. Please try again."
+    },
     "addFacility": {
       "buttonLabel": "+ Add New",
       "buttonAriaLabel": "Add a new facility",

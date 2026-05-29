@@ -10,6 +10,7 @@ import Point from '@arcgis/core/geometry/Point';
 import type { AdminFacility } from '../../types/facility';
 import { getFieldSchema } from '../../utils/fieldSchemaCache';
 import type { FieldDef } from '../../utils/fieldSchemaCache';
+import { getFieldConfig, applyFieldConfig } from '../../utils/fieldConfig';
 import HoursEditor from '../../components/admin/HoursEditor';
 import styles from './AddFacilityModal.module.css';
 
@@ -148,9 +149,13 @@ export default function AddFacilityModal({
     setSchemaError(null);
 
     try {
-      const schema = await getFieldSchema();
-      const initialValues = buildInitialFormValues(schema);
-      setFields(schema);
+      const [schema, config] = await Promise.all([
+        getFieldSchema(),
+        getFieldConfig(apiBase, idToken),
+      ]);
+      const orderedFields = applyFieldConfig(schema, config);
+      const initialValues = buildInitialFormValues(orderedFields);
+      setFields(orderedFields);
       setFormValues(initialValues);
       setStep('form');
 
@@ -166,7 +171,7 @@ export default function AddFacilityModal({
         const addr = data.result?.address?.Match_addr;
         if (addr) {
           setFormValues((prev) => {
-            const addrField = schema.find(isAddressField);
+            const addrField = orderedFields.find(isAddressField);
             if (!addrField) return prev;
             return { ...prev, [addrField.name]: addr };
           });
@@ -177,7 +182,7 @@ export default function AddFacilityModal({
     } catch {
       setSchemaError(t('admin.addFacility.schemaLoadError'));
     }
-  }, [pin, t]);
+  }, [pin, apiBase, idToken, t]);
 
   const handleSave = useCallback(async () => {
     if (!pin) return;
