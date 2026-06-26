@@ -5,7 +5,7 @@ import { getFacilityType } from '../../types/facility';
 import { useTranslateContent } from '../../hooks/useTranslateContent';
 import StatusBadge from '../common/StatusBadge';
 import DirectionsButtons from '../common/DirectionsButtons';
-import PopupSections, { CapacityBadge } from './PopupSections';
+import PopupSections from './PopupSections';
 import styles from './FacilityPopup.module.css';
 
 interface FacilityPopupProps {
@@ -145,7 +145,6 @@ export default function FacilityPopup({ facility, facilityLocation, originPoint,
         {/* Status badges */}
         <div className={styles.badgeRow}>
           <StatusBadge type={type} isActive={isActive} />
-          <CapacityBadge status={facility.Capacity_Status} />
         </div>
 
         {/* Get Directions */}

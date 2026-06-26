@@ -45,7 +45,7 @@
     "phone": "Phone",
     "email": "Email",
     "website": "Website",
-    "nearestBusStop": "Nearest Bus Stop",
+    "nearestBusStop": "Nearest Bus Stop and/or Bus Route",
     "adaCompliant": "ADA Compliant",
     "petAccessibility": "Pet Accessibility",
     "chargingStations": "Charging Stations",

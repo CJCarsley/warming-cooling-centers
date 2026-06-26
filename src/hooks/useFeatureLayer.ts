@@ -96,7 +96,9 @@ export function useFeatureLayer(view: MapView | null): UseFeatureLayerResult {
       outFields: ['*'],
       renderer: buildRenderer(),
       popupEnabled: false,
-      definitionExpression: "Warming_Active = 'Yes' OR Cooling_Active = 'Yes'",
+      // Hide at-capacity facilities until capacity is reestablished.
+      definitionExpression:
+        "(Warming_Active = 'Yes' OR Cooling_Active = 'Yes') AND (Capacity_Status IS NULL OR Capacity_Status <> 'Full')",
     });
 
     esriMap.add(featureLayer);
@@ -105,7 +107,7 @@ export function useFeatureLayer(view: MapView | null): UseFeatureLayerResult {
     const loadData = async () => {
       await featureLayer.load();
       const result = await featureLayer.queryFeatures({
-        where: '1=1',
+        where: "Capacity_Status IS NULL OR Capacity_Status <> 'Full'",
         outFields: ['*'],
         returnGeometry: true,
         outSpatialReference: new SpatialReference({ wkid: 4326 }),

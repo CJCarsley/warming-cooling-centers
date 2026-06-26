@@ -45,7 +45,7 @@
     "phone": "الهاتف",
     "email": "البريد الإلكتروني",
     "website": "الموقع الإلكتروني",
-    "nearestBusStop": "أقرب محطة حافلة",
+    "nearestBusStop": "أقرب محطة حافلة و/أو خط حافلة",
     "adaCompliant": "متوافق مع قانون ADA",
     "petAccessibility": "إمكانية الوصول للحيوانات الأليفة",
     "chargingStations": "محطات الشحن",

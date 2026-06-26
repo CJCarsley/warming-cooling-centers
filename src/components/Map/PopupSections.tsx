@@ -36,9 +36,8 @@ const CAPACITY_CONFIG: Partial<Record<string, CapacityConfig>> = {
 };
 
 export function CapacityBadge({ status }: { status: string | null }) {
-  const { t } = useTranslation();
   const { t: tMap } = useTranslation('map');
-  if (!status) return <span className={styles.naText}>{t('common.notAvailable')}</span>;
+  if (!status) return <span className={styles.naText}>--</span>;
   const config = CAPACITY_CONFIG[status];
   if (!config) return <span>{status}</span>;
   return (
@@ -69,7 +68,7 @@ function PopupFieldRow({
   // back to the live schema alias, then the raw field name.
   const labelKey = FIELD_LABEL_KEYS[fieldName];
   const label = labelKey ? t(labelKey) : alias ?? fieldName;
-  const na = <span className={styles.naText}>{t('common.notAvailable')}</span>;
+  const na = <span className={styles.naText}>--</span>;
 
   let value: React.ReactNode;
   switch (fieldName) {
