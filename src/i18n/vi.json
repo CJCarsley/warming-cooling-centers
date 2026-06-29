@@ -60,6 +60,9 @@
   "popup": {
     "close": "Đóng",
     "closeAria": "Đóng chi tiết của {{name}}",
+    "eligibilityFlag": "Áp dụng điều kiện tham gia",
+    "eligibilityFlagAria": "Cơ sở này có điều kiện tham gia. Kích hoạt để xem chi tiết.",
+    "eligibilityPopoverTitle": "Điều kiện tham gia",
     "getDirections": "Chỉ đường",
     "getDirectionsAria": "Chỉ đường đến {{name}}",
     "sections": {
