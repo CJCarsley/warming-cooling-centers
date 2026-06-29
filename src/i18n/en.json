@@ -60,6 +60,9 @@
   "popup": {
     "close": "Close",
     "closeAria": "Close details for {{name}}",
+    "eligibilityFlag": "Eligibility Rules Apply",
+    "eligibilityFlagAria": "This facility has eligibility requirements. Activate to view details.",
+    "eligibilityPopoverTitle": "Eligibility requirements",
     "getDirections": "Get Directions",
     "getDirectionsAria": "Get directions to {{name}}",
     "sections": {

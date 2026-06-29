@@ -6,6 +6,7 @@ import { useTranslateContent } from '../../hooks/useTranslateContent';
 import StatusBadge from '../common/StatusBadge';
 import DirectionsButtons from '../common/DirectionsButtons';
 import PopupSections from './PopupSections';
+import EligibilityFlag from './EligibilityFlag';
 import styles from './FacilityPopup.module.css';
 
 interface FacilityPopupProps {
@@ -29,6 +30,7 @@ export default function FacilityPopup({ facility, facilityLocation, originPoint,
   const type = getFacilityType(facility);
   const isActive = type !== 'inactive';
   const lang = i18n.language;
+  const hasEligibility = !!facility.Eligibility?.trim();
 
   const TYPE_STATUS_LABELS: Record<string, string> = {
     warming: tMap('aria.warmingCenter'),
@@ -132,6 +134,7 @@ export default function FacilityPopup({ facility, facilityLocation, originPoint,
           >
             {tName || facility.Name}
           </h2>
+          {hasEligibility && <EligibilityFlag eligibility={facility.Eligibility!} />}
           <button
             type="button"
             className={styles.closeButton}

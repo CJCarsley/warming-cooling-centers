@@ -60,6 +60,9 @@
   "popup": {
     "close": "إغلاق",
     "closeAria": "إغلاق تفاصيل {{name}}",
+    "eligibilityFlag": "تنطبق شروط الأهلية",
+    "eligibilityFlagAria": "يوجد لهذا المرفق شروط أهلية. فعّل لعرض التفاصيل.",
+    "eligibilityPopoverTitle": "شروط الأهلية",
     "getDirections": "الحصول على الاتجاهات",
     "getDirectionsAria": "الحصول على اتجاهات إلى {{name}}",
     "sections": {
