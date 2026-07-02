@@ -9,6 +9,9 @@ export default function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
+        <p className={styles.disclaimer}>
+          {t('footer.disclaimer')}
+        </p>
         <div className={styles.links}>
           <Link to="/accessibility" className={styles.link}>
             {t('footer.accessibilityStatement')}

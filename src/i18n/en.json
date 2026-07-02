@@ -19,7 +19,7 @@
   },
   "footer": {
     "copyright": "© {{year}} Douglas County, Nebraska. All rights reserved.",
-    "disclaimer": "Information is subject to change. Call ahead to confirm availability.",
+    "disclaimer": "This dashboard is intended to help users locate warming and cooling centers. Each facility provides and maintains its own information. Users should confirm availability and eligibility before visiting.",
     "accessibilityStatement": "Accessibility Statement",
     "contact": "Contact Us",
     "staffLogin": "Staff Login"
