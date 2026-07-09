@@ -14,5 +14,5 @@ export const updateStatus = defineFunction({
     SES_REGION: 'us-east-1',
   },
   timeoutSeconds: 30,
-  runtime: 18,
+  runtime: 22,
 });

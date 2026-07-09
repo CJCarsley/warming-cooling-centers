@@ -8,5 +8,5 @@ export const getArcGISPublicToken = defineFunction({
     ARCGIS_CLIENT_SECRET: secret('ARCGIS_CLIENT_SECRET'),
   },
   timeoutSeconds: 15,
-  runtime: 18,
+  runtime: 22,
 });

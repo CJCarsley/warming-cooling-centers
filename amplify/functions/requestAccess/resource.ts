@@ -9,5 +9,5 @@ export const requestAccess = defineFunction({
     APP_URL: 'https://master.d2ru7u72364jx5.amplifyapp.com',
   },
   timeoutSeconds: 15,
-  runtime: 18,
+  runtime: 22,
 });
