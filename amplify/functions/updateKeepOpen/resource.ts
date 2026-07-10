@@ -7,5 +7,5 @@ export const updateKeepOpen = defineFunction({
     TABLE_NAME: 'FacilityOverrides',
   },
   timeoutSeconds: 10,
-  runtime: 18,
+  runtime: 22,
 });

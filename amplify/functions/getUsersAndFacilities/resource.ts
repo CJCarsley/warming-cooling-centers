@@ -10,5 +10,5 @@ export const getUsersAndFacilities = defineFunction({
       'https://services.arcgis.com/pDAi2YK0L0QxVJHj/arcgis/rest/services/Warming_and_Cooling_Centers/FeatureServer/0',
   },
   timeoutSeconds: 30,
-  runtime: 18,
+  runtime: 22,
 });

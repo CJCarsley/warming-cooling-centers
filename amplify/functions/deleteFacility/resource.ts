@@ -11,5 +11,5 @@ export const deleteFacility = defineFunction({
     TABLE_NAME: 'FacilityOverrides',
   },
   timeoutSeconds: 30,
-  runtime: 18,
+  runtime: 22,
 });

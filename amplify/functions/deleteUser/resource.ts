@@ -4,5 +4,5 @@ export const deleteUser = defineFunction({
   name: 'deleteUser',
   entry: './handler.ts',
   timeoutSeconds: 15,
-  runtime: 18,
+  runtime: 22,
 });

@@ -14,5 +14,5 @@ export const autoResetFacilities = defineFunction({
     APP_URL: 'https://master.d2ru7u72364jx5.amplifyapp.com/admin',
   },
   timeoutSeconds: 60,
-  runtime: 18,
+  runtime: 22,
 });

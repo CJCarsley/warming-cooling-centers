@@ -4,5 +4,5 @@ export const manageUserRole = defineFunction({
   name: 'manageUserRole',
   entry: './handler.ts',
   timeoutSeconds: 15,
-  runtime: 18,
+  runtime: 22,
 });
