@@ -12,40 +12,15 @@ import AddFacilityModal from './AddFacilityModal';
 import UpdateFieldsModal from './UpdateFieldsModal';
 import UpdatePopupModal from './UpdatePopupModal';
 import HoursEditor from '../../components/admin/HoursEditor';
+import AddressAutocomplete from '../../components/admin/AddressAutocomplete';
+import { geocodeAddress, geocodeByMagicKey, type GeocodeResult, type AddressSuggestion } from '../../utils/geocode';
 import styles from './AdminPanel.module.css';
 
 const FEATURE_LAYER_URL =
   'https://services.arcgis.com/pDAi2YK0L0QxVJHj/arcgis/rest/services/Warming_and_Cooling_Centers/FeatureServer/0';
-const FORWARD_GEOCODE_URL =
-  'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates';
 
 function isAddressField(f: FieldDef): boolean {
   return /address/i.test(f.name) || /address/i.test(f.alias);
-}
-
-interface GeocodeResult {
-  x: number; // longitude (WGS84)
-  y: number; // latitude (WGS84)
-  matchAddr: string;
-  score: number;
-}
-
-async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
-  const params = new URLSearchParams({
-    SingleLine: address,
-    f: 'json',
-    maxLocations: '1',
-    outFields: 'Match_addr',
-    // Bias toward the Douglas County, NE service area
-    countryCode: 'USA',
-  });
-  const res = await fetch(`${FORWARD_GEOCODE_URL}?${params.toString()}`);
-  const data = (await res.json()) as {
-    candidates?: Array<{ address: string; location: { x: number; y: number }; score: number }>;
-  };
-  const c = data.candidates?.[0];
-  if (!c || typeof c.location?.x !== 'number' || typeof c.location?.y !== 'number') return null;
-  return { x: c.location.x, y: c.location.y, matchAddr: c.address, score: c.score };
 }
 
 interface AmplifyOutputsShape {
@@ -179,6 +154,9 @@ export default function AdminPanel({
     attributes: RawAttrs;
     geo: GeocodeResult | null;
   } | null>(null);
+  // Precise coords for an address picked from the autocomplete dropdown; used at
+  // save so a picked suggestion skips the ambiguous free-text geocode.
+  const [pickedAddr, setPickedAddr] = useState<(GeocodeResult & { text: string }) | null>(null);
 
   const [pendingDelete, setPendingDelete] = useState<{ facilityId: number; facilityName: string } | null>(null);
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null);
@@ -427,6 +405,7 @@ export default function AdminPanel({
     setExpandedId(facilityId);
     setExpandedRawAttrs(null);
     setEditValues({});
+    setPickedAddr(null);
     setExpandError(null);
     setSaveAttrsError(null);
     setIsExpandLoading(true);
@@ -564,6 +543,13 @@ export default function AdminPanel({
       return;
     }
 
+    // A suggestion picked from the dropdown already carries precise coords — reuse
+    // them instead of re-geocoding ambiguous free text.
+    if (pickedAddr && pickedAddr.text.trim() === newAddr) {
+      setPendingAddrSave({ facilityId, attributes, geo: pickedAddr });
+      return;
+    }
+
     setIsSavingAttrs(true);
     let geo: GeocodeResult | null = null;
     try {
@@ -575,7 +561,17 @@ export default function AdminPanel({
     }
     // Open the confirmation dialog (geo may be null → "couldn't locate" path).
     setPendingAddrSave({ facilityId, attributes, geo });
-  }, [expandedFields, expandedRawAttrs, editValues, commitAttrs]);
+  }, [expandedFields, expandedRawAttrs, editValues, pickedAddr, commitAttrs]);
+
+  const handlePickAddress = useCallback(async (fieldName: string, s: AddressSuggestion) => {
+    setEditValues((prev) => ({ ...prev, [fieldName]: s.text }));
+    try {
+      const geo = await geocodeByMagicKey(s.text, s.magicKey);
+      if (geo) setPickedAddr({ ...geo, text: s.text });
+    } catch (err) {
+      console.error('geocode magicKey error:', err);
+    }
+  }, []);
 
   const handleAddrCancel = useCallback(() => {
     addrDialogRef.current?.close();
@@ -948,6 +944,9 @@ export default function AdminPanel({
                                   field={f}
                                   value={editValues[f.name] ?? ''}
                                   onChange={(name, val) => setEditValues((prev) => ({ ...prev, [name]: val }))}
+                                  isAddress={isAddressField(f)}
+                                  onPickAddress={(s) => void handlePickAddress(f.name, s)}
+                                  addressListboxLabel={t('admin.editFacility.addressSuggestionsLabel')}
                                   inputRef={idx === 0 ? (el) => { firstEditFieldRef.current = el; } : undefined}
                                 />
                               ))}
@@ -1274,12 +1273,44 @@ interface InlineFieldInputProps {
   field: FieldDef;
   value: string;
   onChange: (name: string, value: string) => void;
+  isAddress?: boolean;
+  onPickAddress?: (s: AddressSuggestion) => void;
+  addressListboxLabel?: string;
   inputRef?: (el: HTMLInputElement | HTMLSelectElement | null) => void;
 }
 
-function InlineFieldInput({ field, value, onChange, inputRef }: InlineFieldInputProps) {
+function InlineFieldInput({
+  field,
+  value,
+  onChange,
+  isAddress,
+  onPickAddress,
+  addressListboxLabel,
+  inputRef,
+}: InlineFieldInputProps) {
   const id = `inline-${field.name}`;
   const required = field.nullable === false;
+
+  if (isAddress && onPickAddress) {
+    return (
+      <div className={styles.inlineFormGroup}>
+        <label htmlFor={id} className={styles.inlineFieldLabel}>
+          {field.alias}
+          {required && <span aria-hidden="true"> *</span>}
+        </label>
+        <AddressAutocomplete
+          id={id}
+          value={value}
+          required={required}
+          inputClassName={styles.inlineFieldInput}
+          listboxLabel={addressListboxLabel ?? 'Address suggestions'}
+          onChange={(val) => onChange(field.name, val)}
+          onPick={onPickAddress}
+          inputRef={inputRef as (el: HTMLInputElement | null) => void}
+        />
+      </div>
+    );
+  }
 
   if (field.name === 'Hours') {
     return (
