@@ -12,40 +12,15 @@ import AddFacilityModal from './AddFacilityModal';
 import UpdateFieldsModal from './UpdateFieldsModal';
 import UpdatePopupModal from './UpdatePopupModal';
 import HoursEditor from '../../components/admin/HoursEditor';
+import AddressAutocomplete from '../../components/admin/AddressAutocomplete';
+import { geocodeAddress, geocodeByMagicKey, type GeocodeResult, type AddressSuggestion } from '../../utils/geocode';
 import styles from './AdminPanel.module.css';
 
 const FEATURE_LAYER_URL =
   'https://services.arcgis.com/pDAi2YK0L0QxVJHj/arcgis/rest/services/Warming_and_Cooling_Centers/FeatureServer/0';
-const FORWARD_GEOCODE_URL =
-  'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates';
 
 function isAddressField(f: FieldDef): boolean {
   return /address/i.test(f.name) || /address/i.test(f.alias);
-}
-
-interface GeocodeResult {
-  x: number; // longitude (WGS84)
-  y: number; // latitude (WGS84)
-  matchAddr: string;
-  score: number;
-}
-
-async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
-  const params = new URLSearchParams({
-    SingleLine: address,
-    f: 'json',
-    maxLocations: '1',
-    outFields: 'Match_addr',
-    // Bias toward the Douglas County, NE service area
-    countryCode: 'USA',
-  });
-  const res = await fetch(`${FORWARD_GEOCODE_URL}?${params.toString()}`);
-  const data = (await res.json()) as {
-    candidates?: Array<{ address: string; location: { x: number; y: number }; score: number }>;
-  };
-  const c = data.candidates?.[0];
-  if (!c || typeof c.location?.x !== 'number' || typeof c.location?.y !== 'number') return null;
-  return { x: c.location.x, y: c.location.y, matchAddr: c.address, score: c.score };
 }
 
 interface AmplifyOutputsShape {
@@ -177,9 +152,11 @@ export default function AdminPanel({
   const [pendingAddrSave, setPendingAddrSave] = useState<{
     facilityId: number;
     attributes: RawAttrs;
-    newName?: string;
     geo: GeocodeResult | null;
   } | null>(null);
+  // Precise coords for an address picked from the autocomplete dropdown; used at
+  // save so a picked suggestion skips the ambiguous free-text geocode.
+  const [pickedAddr, setPickedAddr] = useState<(GeocodeResult & { text: string }) | null>(null);
 
   const [pendingDelete, setPendingDelete] = useState<{ facilityId: number; facilityName: string } | null>(null);
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null);
@@ -195,6 +172,23 @@ export default function AdminPanel({
   const updateFieldsBtnRef = useRef<HTMLButtonElement>(null);
   const updatePopupBtnRef = useRef<HTMLButtonElement>(null);
   const firstEditFieldRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
+
+  // Authorized API call with stale-token self-heal: the cached id token's
+  // custom:facility_ids claim can lag a recent grant → 403. On a 403, force-refresh
+  // the token once and retry so the claim catches up.
+  const authedFetch = useCallback(async (path: string, init: RequestInit = {}) => {
+    const send = async (forceRefresh: boolean) => {
+      const session = await fetchAuthSession(forceRefresh ? { forceRefresh: true } : undefined);
+      const tok = session.tokens?.idToken?.toString() ?? '';
+      return fetch(`${resolvedApiBase}${path}`, {
+        ...init,
+        headers: { ...(init.headers ?? {}), Authorization: tok },
+      });
+    };
+    let res = await send(false);
+    if (res.status === 403) res = await send(true);
+    return res;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -239,9 +233,7 @@ export default function AdminPanel({
           if (!cancelled) setFacilities((data.features ?? []).map((f) => f.attributes));
         }
 
-        const keepOpenRes = await fetch(`${resolvedApiBase}facilities/keep-open`, {
-          headers: { Authorization: tok },
-        });
+        const keepOpenRes = await authedFetch('facilities/keep-open');
         if (keepOpenRes.ok) {
           const keepOpenData = (await keepOpenRes.json()) as { keepOpenIds: number[] };
           if (!cancelled) setKeepOpenIds(new Set(keepOpenData.keepOpenIds));
@@ -259,7 +251,7 @@ export default function AdminPanel({
 
     void loadFacilities();
     return () => { cancelled = true; };
-  }, [userEmail, t]);
+  }, [userEmail, authedFetch, t]);
 
   useEffect(() => {
     if (pendingToggle) {
@@ -307,6 +299,9 @@ export default function AdminPanel({
     setPendingToggle(null);
   }, []);
 
+  // Authorized API call with stale-token self-heal: the cached id token's
+  // custom:facility_ids claim can lag a recent grant → 403. On a 403, force-refresh
+  // the token once and retry so the claim catches up.
   const handleConfirm = useCallback(async () => {
     if (!pendingToggle) return;
     const { facilityId, field, newValue, clearField } = pendingToggle;
@@ -324,20 +319,19 @@ export default function AdminPanel({
     });
 
     try {
-      const session = await fetchAuthSession();
-      const tok = session.tokens?.idToken?.toString() ?? '';
+      const jsonHeaders = { 'Content-Type': 'application/json' };
 
-      const res = await fetch(`${resolvedApiBase}facilities/status`, {
+      const res = await authedFetch('facilities/status', {
         method: 'POST',
-        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify({ featureId: facilityId, field, value: newValue }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       if (clearField) {
-        const clearRes = await fetch(`${resolvedApiBase}facilities/status`, {
+        const clearRes = await authedFetch('facilities/status', {
           method: 'POST',
-          headers: { Authorization: tok, 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({ featureId: facilityId, field: clearField, value: false }),
         });
         if (!clearRes.ok) throw new Error(`HTTP ${clearRes.status}`);
@@ -349,9 +343,9 @@ export default function AdminPanel({
       const otherIsActive = facilityState?.[otherField] === 'Yes';
       const willBeInactive = !newValue && !otherIsActive;
       if (keepOpenIds.has(facilityId) && willBeInactive) {
-        void fetch(`${resolvedApiBase}facilities/keep-open`, {
+        void authedFetch('facilities/keep-open', {
           method: 'PATCH',
-          headers: { Authorization: tok, 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({ facilityId, keepOpen: false }),
         }).then(() => {
           setKeepOpenIds((prev) => {
@@ -383,7 +377,7 @@ export default function AdminPanel({
         return next;
       });
     }
-  }, [pendingToggle, keepOpenIds, facilities, t]);
+  }, [pendingToggle, keepOpenIds, facilities, authedFetch, t]);
 
   const handleKeepOpenToggle = useCallback(
     async (facility: AdminFacility) => {
@@ -391,11 +385,9 @@ export default function AdminPanel({
       const nextValue = !keepOpenIds.has(facilityId);
       setKeepOpenPendingIds((prev) => new Set(prev).add(facilityId));
       try {
-        const session = await fetchAuthSession();
-        const tok = session.tokens?.idToken?.toString() ?? '';
-        const res = await fetch(`${resolvedApiBase}facilities/keep-open`, {
+        const res = await authedFetch('facilities/keep-open', {
           method: 'PATCH',
-          headers: { Authorization: tok, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ facilityId, keepOpen: nextValue }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -416,7 +408,7 @@ export default function AdminPanel({
         });
       }
     },
-    [keepOpenIds, t],
+    [keepOpenIds, authedFetch, t],
   );
 
   const handleEditOpen = useCallback(async (facilityId: number) => {
@@ -428,6 +420,7 @@ export default function AdminPanel({
     setExpandedId(facilityId);
     setExpandedRawAttrs(null);
     setEditValues({});
+    setPickedAddr(null);
     setExpandError(null);
     setSaveAttrsError(null);
     setIsExpandLoading(true);
@@ -479,29 +472,34 @@ export default function AdminPanel({
   const commitAttrs = useCallback(async (
     facilityId: number,
     attributes: RawAttrs,
-    newName: string | undefined,
     geometry?: { x: number; y: number; spatialReference: { wkid: number } },
   ) => {
     setIsSavingAttrs(true);
     setSaveAttrsError(null);
     try {
-      const session = await fetchAuthSession();
-      const tok = session.tokens?.idToken?.toString() ?? '';
-      const res = await fetch(`${resolvedApiBase}facility/update-attributes`, {
+      const res = await authedFetch('facility/update-attributes', {
         method: 'POST',
-        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ objectId: facilityId, attributes, ...(geometry ? { geometry } : {}) }),
       });
+
       if (!res.ok) {
         const err = (await res.json()) as { error?: string };
         throw new Error(err.error ?? `HTTP ${res.status}`);
       }
 
-      if (newName) {
-        setFacilities((prev) =>
-          prev.map((f) => f.ObjectID === facilityId ? { ...f, Name: newName, EditDate: Date.now() } : f),
-        );
-      }
+      // Reflect edited summary fields (Name, Address) in local state immediately —
+      // the card summary reads these, not the feature layer, so a re-query isn't
+      // triggered on save.
+      setFacilities((prev) =>
+        prev.map((f) => {
+          if (f.ObjectID !== facilityId) return f;
+          const next = { ...f, EditDate: Date.now() };
+          if (attributes.Name != null) next.Name = String(attributes.Name);
+          if ('Address' in attributes) next.Address = String(attributes.Address ?? '');
+          return next;
+        }),
+      );
 
       setExpandedId(null);
       setExpandedRawAttrs(null);
@@ -516,7 +514,7 @@ export default function AdminPanel({
     } finally {
       setIsSavingAttrs(false);
     }
-  }, [t]);
+  }, [authedFetch, t]);
 
   const handleSaveAttrs = useCallback(async (facilityId: number) => {
     setSaveAttrsError(null);
@@ -538,8 +536,6 @@ export default function AdminPanel({
       }
     }
 
-    const newName = editValues['Name'] || undefined;
-
     // Did the Address change? If so, geocode and confirm before moving the pin.
     const addrField = expandedFields.find(isAddressField);
     const origAddr = addrField ? String(expandedRawAttrs?.[addrField.name] ?? '') : '';
@@ -547,7 +543,14 @@ export default function AdminPanel({
     const addrChanged = !!addrField && newAddr !== '' && newAddr !== origAddr.trim();
 
     if (!addrChanged) {
-      await commitAttrs(facilityId, attributes, newName);
+      await commitAttrs(facilityId, attributes);
+      return;
+    }
+
+    // A suggestion picked from the dropdown already carries precise coords — reuse
+    // them instead of re-geocoding ambiguous free text.
+    if (pickedAddr && pickedAddr.text.trim() === newAddr) {
+      setPendingAddrSave({ facilityId, attributes, geo: pickedAddr });
       return;
     }
 
@@ -561,8 +564,18 @@ export default function AdminPanel({
       setIsSavingAttrs(false);
     }
     // Open the confirmation dialog (geo may be null → "couldn't locate" path).
-    setPendingAddrSave({ facilityId, attributes, newName, geo });
-  }, [expandedFields, expandedRawAttrs, editValues, commitAttrs]);
+    setPendingAddrSave({ facilityId, attributes, geo });
+  }, [expandedFields, expandedRawAttrs, editValues, pickedAddr, commitAttrs]);
+
+  const handlePickAddress = useCallback(async (fieldName: string, s: AddressSuggestion) => {
+    setEditValues((prev) => ({ ...prev, [fieldName]: s.text }));
+    try {
+      const geo = await geocodeByMagicKey(s.text, s.magicKey);
+      if (geo) setPickedAddr({ ...geo, text: s.text });
+    } catch (err) {
+      console.error('geocode magicKey error:', err);
+    }
+  }, []);
 
   const handleAddrCancel = useCallback(() => {
     addrDialogRef.current?.close();
@@ -572,13 +585,13 @@ export default function AdminPanel({
   // Confirm from the dialog: move the pin when a match was found, else save text only.
   const handleAddrConfirm = useCallback(async (movePin: boolean) => {
     if (!pendingAddrSave) return;
-    const { facilityId, attributes, newName, geo } = pendingAddrSave;
+    const { facilityId, attributes, geo } = pendingAddrSave;
     const geometry = movePin && geo
       ? { x: geo.x, y: geo.y, spatialReference: { wkid: 4326 } }
       : undefined;
     addrDialogRef.current?.close();
     setPendingAddrSave(null);
-    await commitAttrs(facilityId, attributes, newName, geometry);
+    await commitAttrs(facilityId, attributes, geometry);
   }, [pendingAddrSave, commitAttrs]);
 
   const handleNotifOpen = useCallback(async (facilityId: number) => {
@@ -593,12 +606,7 @@ export default function AdminPanel({
     setNotifSaveError(null);
     setIsNotifLoading(true);
     try {
-      const session = await fetchAuthSession();
-      const tok = session.tokens?.idToken?.toString() ?? '';
-      const res = await fetch(
-        `${resolvedApiBase}facilities/notifications?facilityId=${facilityId}`,
-        { headers: { Authorization: tok } },
-      );
+      const res = await authedFetch(`facilities/notifications?facilityId=${facilityId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { notificationEmails: string };
       setNotifEmails(data.notificationEmails ?? '');
@@ -608,17 +616,15 @@ export default function AdminPanel({
     } finally {
       setIsNotifLoading(false);
     }
-  }, [notifExpandedId, expandedId, t]);
+  }, [notifExpandedId, expandedId, authedFetch, t]);
 
   const handleSaveNotifications = useCallback(async (facilityId: number) => {
     setIsNotifSaving(true);
     setNotifSaveError(null);
     try {
-      const session = await fetchAuthSession();
-      const tok = session.tokens?.idToken?.toString() ?? '';
-      const res = await fetch(`${resolvedApiBase}facilities/notifications`, {
+      const res = await authedFetch('facilities/notifications', {
         method: 'PATCH',
-        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ facilityId, emails: notifEmails }),
       });
       if (!res.ok) {
@@ -633,7 +639,7 @@ export default function AdminPanel({
     } finally {
       setIsNotifSaving(false);
     }
-  }, [notifEmails, t]);
+  }, [notifEmails, authedFetch, t]);
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!pendingDelete) return;
@@ -642,11 +648,9 @@ export default function AdminPanel({
     setPendingDelete(null);
     setIsDeletingId(facilityId);
     try {
-      const session = await fetchAuthSession();
-      const tok = session.tokens?.idToken?.toString() ?? '';
-      const res = await fetch(`${resolvedApiBase}facility/delete`, {
+      const res = await authedFetch('facility/delete', {
         method: 'POST',
-        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ objectId: facilityId }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -659,7 +663,7 @@ export default function AdminPanel({
     } finally {
       setIsDeletingId(null);
     }
-  }, [pendingDelete, t]);
+  }, [pendingDelete, authedFetch, t]);
 
   const conflictType = pendingToggle?.clearField === 'Warming_Active'
     ? t('admin.panel.warming')
@@ -935,6 +939,9 @@ export default function AdminPanel({
                                   field={f}
                                   value={editValues[f.name] ?? ''}
                                   onChange={(name, val) => setEditValues((prev) => ({ ...prev, [name]: val }))}
+                                  isAddress={isAddressField(f)}
+                                  onPickAddress={(s) => void handlePickAddress(f.name, s)}
+                                  addressListboxLabel={t('admin.editFacility.addressSuggestionsLabel')}
                                   inputRef={idx === 0 ? (el) => { firstEditFieldRef.current = el; } : undefined}
                                 />
                               ))}
@@ -1261,12 +1268,44 @@ interface InlineFieldInputProps {
   field: FieldDef;
   value: string;
   onChange: (name: string, value: string) => void;
+  isAddress?: boolean;
+  onPickAddress?: (s: AddressSuggestion) => void;
+  addressListboxLabel?: string;
   inputRef?: (el: HTMLInputElement | HTMLSelectElement | null) => void;
 }
 
-function InlineFieldInput({ field, value, onChange, inputRef }: InlineFieldInputProps) {
+function InlineFieldInput({
+  field,
+  value,
+  onChange,
+  isAddress,
+  onPickAddress,
+  addressListboxLabel,
+  inputRef,
+}: InlineFieldInputProps) {
   const id = `inline-${field.name}`;
   const required = field.nullable === false;
+
+  if (isAddress && onPickAddress) {
+    return (
+      <div className={styles.inlineFormGroup}>
+        <label htmlFor={id} className={styles.inlineFieldLabel}>
+          {field.alias}
+          {required && <span aria-hidden="true"> *</span>}
+        </label>
+        <AddressAutocomplete
+          id={id}
+          value={value}
+          required={required}
+          inputClassName={styles.inlineFieldInput}
+          listboxLabel={addressListboxLabel ?? 'Address suggestions'}
+          onChange={(val) => onChange(field.name, val)}
+          onPick={onPickAddress}
+          inputRef={inputRef as (el: HTMLInputElement | null) => void}
+        />
+      </div>
+    );
+  }
 
   if (field.name === 'Hours') {
     return (

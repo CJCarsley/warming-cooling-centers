@@ -306,6 +306,7 @@
       "loadError": "Error al cargar los datos del centro. Por favor, inténtelo de nuevo.",
       "movePinTitle": "¿Actualizar la ubicación en el mapa?",
       "movePinMessage": "La dirección cambió. ¿Mover el marcador del mapa y las indicaciones para llegar de este centro a la ubicación siguiente?",
+      "addressSuggestionsLabel": "Sugerencias de dirección",
       "movePinConfirm": "Mover Marcador y Guardar",
       "movePinNotFound": "No se encontraron coordenadas para la nueva dirección. ¿Guardar el texto de la dirección sin mover el marcador del mapa? Las indicaciones seguirán apuntando a la ubicación anterior.",
       "saveTextOnly": "Guardar Solo el Texto"
