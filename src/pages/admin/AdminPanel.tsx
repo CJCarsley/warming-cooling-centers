@@ -177,7 +177,6 @@ export default function AdminPanel({
   const [pendingAddrSave, setPendingAddrSave] = useState<{
     facilityId: number;
     attributes: RawAttrs;
-    newName?: string;
     geo: GeocodeResult | null;
   } | null>(null);
 
@@ -479,7 +478,6 @@ export default function AdminPanel({
   const commitAttrs = useCallback(async (
     facilityId: number,
     attributes: RawAttrs,
-    newName: string | undefined,
     geometry?: { x: number; y: number; spatialReference: { wkid: number } },
   ) => {
     setIsSavingAttrs(true);
@@ -507,11 +505,18 @@ export default function AdminPanel({
         throw new Error(err.error ?? `HTTP ${res.status}`);
       }
 
-      if (newName) {
-        setFacilities((prev) =>
-          prev.map((f) => f.ObjectID === facilityId ? { ...f, Name: newName, EditDate: Date.now() } : f),
-        );
-      }
+      // Reflect edited summary fields (Name, Address) in local state immediately —
+      // the card summary reads these, not the feature layer, so a re-query isn't
+      // triggered on save.
+      setFacilities((prev) =>
+        prev.map((f) => {
+          if (f.ObjectID !== facilityId) return f;
+          const next = { ...f, EditDate: Date.now() };
+          if (attributes.Name != null) next.Name = String(attributes.Name);
+          if ('Address' in attributes) next.Address = String(attributes.Address ?? '');
+          return next;
+        }),
+      );
 
       setExpandedId(null);
       setExpandedRawAttrs(null);
@@ -548,8 +553,6 @@ export default function AdminPanel({
       }
     }
 
-    const newName = editValues['Name'] || undefined;
-
     // Did the Address change? If so, geocode and confirm before moving the pin.
     const addrField = expandedFields.find(isAddressField);
     const origAddr = addrField ? String(expandedRawAttrs?.[addrField.name] ?? '') : '';
@@ -557,7 +560,7 @@ export default function AdminPanel({
     const addrChanged = !!addrField && newAddr !== '' && newAddr !== origAddr.trim();
 
     if (!addrChanged) {
-      await commitAttrs(facilityId, attributes, newName);
+      await commitAttrs(facilityId, attributes);
       return;
     }
 
@@ -571,7 +574,7 @@ export default function AdminPanel({
       setIsSavingAttrs(false);
     }
     // Open the confirmation dialog (geo may be null → "couldn't locate" path).
-    setPendingAddrSave({ facilityId, attributes, newName, geo });
+    setPendingAddrSave({ facilityId, attributes, geo });
   }, [expandedFields, expandedRawAttrs, editValues, commitAttrs]);
 
   const handleAddrCancel = useCallback(() => {
@@ -582,13 +585,13 @@ export default function AdminPanel({
   // Confirm from the dialog: move the pin when a match was found, else save text only.
   const handleAddrConfirm = useCallback(async (movePin: boolean) => {
     if (!pendingAddrSave) return;
-    const { facilityId, attributes, newName, geo } = pendingAddrSave;
+    const { facilityId, attributes, geo } = pendingAddrSave;
     const geometry = movePin && geo
       ? { x: geo.x, y: geo.y, spatialReference: { wkid: 4326 } }
       : undefined;
     addrDialogRef.current?.close();
     setPendingAddrSave(null);
-    await commitAttrs(facilityId, attributes, newName, geometry);
+    await commitAttrs(facilityId, attributes, geometry);
   }, [pendingAddrSave, commitAttrs]);
 
   const handleNotifOpen = useCallback(async (facilityId: number) => {
