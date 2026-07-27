@@ -485,13 +485,23 @@ export default function AdminPanel({
     setIsSavingAttrs(true);
     setSaveAttrsError(null);
     try {
-      const session = await fetchAuthSession();
-      const tok = session.tokens?.idToken?.toString() ?? '';
-      const res = await fetch(`${resolvedApiBase}facility/update-attributes`, {
-        method: 'POST',
-        headers: { Authorization: tok, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ objectId: facilityId, attributes, ...(geometry ? { geometry } : {}) }),
-      });
+      const body = JSON.stringify({ objectId: facilityId, attributes, ...(geometry ? { geometry } : {}) });
+      const send = async (forceRefresh: boolean) => {
+        const session = await fetchAuthSession(forceRefresh ? { forceRefresh: true } : undefined);
+        const tok = session.tokens?.idToken?.toString() ?? '';
+        return fetch(`${resolvedApiBase}facility/update-attributes`, {
+          method: 'POST',
+          headers: { Authorization: tok, 'Content-Type': 'application/json' },
+          body,
+        });
+      };
+
+      // The visible facility list comes from fresh Cognito attributes, but the
+      // cached id token's custom:facility_ids claim can lag a recent grant → 403.
+      // Force-refresh the token once and retry so the claim catches up.
+      let res = await send(false);
+      if (res.status === 403) res = await send(true);
+
       if (!res.ok) {
         const err = (await res.json()) as { error?: string };
         throw new Error(err.error ?? `HTTP ${res.status}`);
