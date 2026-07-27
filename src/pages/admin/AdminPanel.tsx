@@ -284,6 +284,23 @@ export default function AdminPanel({
     setPendingToggle(null);
   }, []);
 
+  // Authorized API call with stale-token self-heal: the cached id token's
+  // custom:facility_ids claim can lag a recent grant → 403. On a 403, force-refresh
+  // the token once and retry so the claim catches up.
+  const authedFetch = useCallback(async (path: string, init: RequestInit = {}) => {
+    const send = async (forceRefresh: boolean) => {
+      const session = await fetchAuthSession(forceRefresh ? { forceRefresh: true } : undefined);
+      const tok = session.tokens?.idToken?.toString() ?? '';
+      return fetch(`${resolvedApiBase}${path}`, {
+        ...init,
+        headers: { ...(init.headers ?? {}), Authorization: tok },
+      });
+    };
+    let res = await send(false);
+    if (res.status === 403) res = await send(true);
+    return res;
+  }, []);
+
   const handleConfirm = useCallback(async () => {
     if (!pendingToggle) return;
     const { facilityId, field, newValue, clearField } = pendingToggle;
@@ -301,20 +318,19 @@ export default function AdminPanel({
     });
 
     try {
-      const session = await fetchAuthSession();
-      const tok = session.tokens?.idToken?.toString() ?? '';
+      const jsonHeaders = { 'Content-Type': 'application/json' };
 
-      const res = await fetch(`${resolvedApiBase}facilities/status`, {
+      const res = await authedFetch('facilities/status', {
         method: 'POST',
-        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify({ featureId: facilityId, field, value: newValue }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       if (clearField) {
-        const clearRes = await fetch(`${resolvedApiBase}facilities/status`, {
+        const clearRes = await authedFetch('facilities/status', {
           method: 'POST',
-          headers: { Authorization: tok, 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({ featureId: facilityId, field: clearField, value: false }),
         });
         if (!clearRes.ok) throw new Error(`HTTP ${clearRes.status}`);
@@ -326,9 +342,9 @@ export default function AdminPanel({
       const otherIsActive = facilityState?.[otherField] === 'Yes';
       const willBeInactive = !newValue && !otherIsActive;
       if (keepOpenIds.has(facilityId) && willBeInactive) {
-        void fetch(`${resolvedApiBase}facilities/keep-open`, {
+        void authedFetch('facilities/keep-open', {
           method: 'PATCH',
-          headers: { Authorization: tok, 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({ facilityId, keepOpen: false }),
         }).then(() => {
           setKeepOpenIds((prev) => {
@@ -360,7 +376,7 @@ export default function AdminPanel({
         return next;
       });
     }
-  }, [pendingToggle, keepOpenIds, facilities, t]);
+  }, [pendingToggle, keepOpenIds, facilities, authedFetch, t]);
 
   const handleKeepOpenToggle = useCallback(
     async (facility: AdminFacility) => {
@@ -368,11 +384,9 @@ export default function AdminPanel({
       const nextValue = !keepOpenIds.has(facilityId);
       setKeepOpenPendingIds((prev) => new Set(prev).add(facilityId));
       try {
-        const session = await fetchAuthSession();
-        const tok = session.tokens?.idToken?.toString() ?? '';
-        const res = await fetch(`${resolvedApiBase}facilities/keep-open`, {
+        const res = await authedFetch('facilities/keep-open', {
           method: 'PATCH',
-          headers: { Authorization: tok, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ facilityId, keepOpen: nextValue }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -393,7 +407,7 @@ export default function AdminPanel({
         });
       }
     },
-    [keepOpenIds, t],
+    [keepOpenIds, authedFetch, t],
   );
 
   const handleEditOpen = useCallback(async (facilityId: number) => {
@@ -462,22 +476,11 @@ export default function AdminPanel({
     setIsSavingAttrs(true);
     setSaveAttrsError(null);
     try {
-      const body = JSON.stringify({ objectId: facilityId, attributes, ...(geometry ? { geometry } : {}) });
-      const send = async (forceRefresh: boolean) => {
-        const session = await fetchAuthSession(forceRefresh ? { forceRefresh: true } : undefined);
-        const tok = session.tokens?.idToken?.toString() ?? '';
-        return fetch(`${resolvedApiBase}facility/update-attributes`, {
-          method: 'POST',
-          headers: { Authorization: tok, 'Content-Type': 'application/json' },
-          body,
-        });
-      };
-
-      // The visible facility list comes from fresh Cognito attributes, but the
-      // cached id token's custom:facility_ids claim can lag a recent grant → 403.
-      // Force-refresh the token once and retry so the claim catches up.
-      let res = await send(false);
-      if (res.status === 403) res = await send(true);
+      const res = await authedFetch('facility/update-attributes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ objectId: facilityId, attributes, ...(geometry ? { geometry } : {}) }),
+      });
 
       if (!res.ok) {
         const err = (await res.json()) as { error?: string };
@@ -510,7 +513,7 @@ export default function AdminPanel({
     } finally {
       setIsSavingAttrs(false);
     }
-  }, [t]);
+  }, [authedFetch, t]);
 
   const handleSaveAttrs = useCallback(async (facilityId: number) => {
     setSaveAttrsError(null);
@@ -651,11 +654,9 @@ export default function AdminPanel({
     setPendingDelete(null);
     setIsDeletingId(facilityId);
     try {
-      const session = await fetchAuthSession();
-      const tok = session.tokens?.idToken?.toString() ?? '';
-      const res = await fetch(`${resolvedApiBase}facility/delete`, {
+      const res = await authedFetch('facility/delete', {
         method: 'POST',
-        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ objectId: facilityId }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -668,7 +669,7 @@ export default function AdminPanel({
     } finally {
       setIsDeletingId(null);
     }
-  }, [pendingDelete, t]);
+  }, [pendingDelete, authedFetch, t]);
 
   const conflictType = pendingToggle?.clearField === 'Warming_Active'
     ? t('admin.panel.warming')
