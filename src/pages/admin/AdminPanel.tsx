@@ -16,6 +16,37 @@ import styles from './AdminPanel.module.css';
 
 const FEATURE_LAYER_URL =
   'https://services.arcgis.com/pDAi2YK0L0QxVJHj/arcgis/rest/services/Warming_and_Cooling_Centers/FeatureServer/0';
+const FORWARD_GEOCODE_URL =
+  'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates';
+
+function isAddressField(f: FieldDef): boolean {
+  return /address/i.test(f.name) || /address/i.test(f.alias);
+}
+
+interface GeocodeResult {
+  x: number; // longitude (WGS84)
+  y: number; // latitude (WGS84)
+  matchAddr: string;
+  score: number;
+}
+
+async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
+  const params = new URLSearchParams({
+    SingleLine: address,
+    f: 'json',
+    maxLocations: '1',
+    outFields: 'Match_addr',
+    // Bias toward the Douglas County, NE service area
+    countryCode: 'USA',
+  });
+  const res = await fetch(`${FORWARD_GEOCODE_URL}?${params.toString()}`);
+  const data = (await res.json()) as {
+    candidates?: Array<{ address: string; location: { x: number; y: number }; score: number }>;
+  };
+  const c = data.candidates?.[0];
+  if (!c || typeof c.location?.x !== 'number' || typeof c.location?.y !== 'number') return null;
+  return { x: c.location.x, y: c.location.y, matchAddr: c.address, score: c.score };
+}
 
 interface AmplifyOutputsShape {
   custom?: { API?: { facilityStatusApiUrl?: string } };
@@ -142,6 +173,14 @@ export default function AdminPanel({
   const [isSavingAttrs, setIsSavingAttrs] = useState(false);
   const [saveAttrsError, setSaveAttrsError] = useState<string | null>(null);
 
+  // Address-changed → geocode confirmation before moving the map pin/geometry
+  const [pendingAddrSave, setPendingAddrSave] = useState<{
+    facilityId: number;
+    attributes: RawAttrs;
+    newName?: string;
+    geo: GeocodeResult | null;
+  } | null>(null);
+
   const [pendingDelete, setPendingDelete] = useState<{ facilityId: number; facilityName: string } | null>(null);
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null);
 
@@ -149,6 +188,8 @@ export default function AdminPanel({
   const cancelBtnRef = useRef<HTMLButtonElement>(null);
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
   const deleteCancelBtnRef = useRef<HTMLButtonElement>(null);
+  const addrDialogRef = useRef<HTMLDialogElement>(null);
+  const addrCancelBtnRef = useRef<HTMLButtonElement>(null);
   const announcerRef = useRef<HTMLDivElement>(null);
   const addNewBtnRef = useRef<HTMLButtonElement>(null);
   const updateFieldsBtnRef = useRef<HTMLButtonElement>(null);
@@ -237,6 +278,15 @@ export default function AdminPanel({
       });
     }
   }, [pendingDelete]);
+
+  useEffect(() => {
+    if (pendingAddrSave) {
+      requestAnimationFrame(() => {
+        addrDialogRef.current?.showModal();
+        addrCancelBtnRef.current?.focus();
+      });
+    }
+  }, [pendingAddrSave]);
 
   const initiateToggle = useCallback(
     (facility: AdminFacility, field: EditStatusField) => {
@@ -423,8 +473,52 @@ export default function AdminPanel({
     }
   }, [expandedId, notifExpandedId, t]);
 
-  const handleSaveAttrs = useCallback(async (facilityId: number) => {
+  // Commits the attribute edit (optionally moving geometry so the map pin and
+  // Get Directions coordinates follow the new address). Shared by the plain save
+  // path and the geocode-confirmation path.
+  const commitAttrs = useCallback(async (
+    facilityId: number,
+    attributes: RawAttrs,
+    newName: string | undefined,
+    geometry?: { x: number; y: number; spatialReference: { wkid: number } },
+  ) => {
     setIsSavingAttrs(true);
+    setSaveAttrsError(null);
+    try {
+      const session = await fetchAuthSession();
+      const tok = session.tokens?.idToken?.toString() ?? '';
+      const res = await fetch(`${resolvedApiBase}facility/update-attributes`, {
+        method: 'POST',
+        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ objectId: facilityId, attributes, ...(geometry ? { geometry } : {}) }),
+      });
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string };
+        throw new Error(err.error ?? `HTTP ${res.status}`);
+      }
+
+      if (newName) {
+        setFacilities((prev) =>
+          prev.map((f) => f.ObjectID === facilityId ? { ...f, Name: newName, EditDate: Date.now() } : f),
+        );
+      }
+
+      setExpandedId(null);
+      setExpandedRawAttrs(null);
+      setEditValues({});
+      setAnnouncement(t('admin.editFacility.saveSuccess'));
+      return true;
+    } catch (err) {
+      console.error('saveAttrs error:', err);
+      setSaveAttrsError(t('admin.editFacility.saveError'));
+      setAnnouncement(t('admin.editFacility.saveError'));
+      return false;
+    } finally {
+      setIsSavingAttrs(false);
+    }
+  }, [t]);
+
+  const handleSaveAttrs = useCallback(async (facilityId: number) => {
     setSaveAttrsError(null);
 
     const attributes: RawAttrs = {};
@@ -444,39 +538,48 @@ export default function AdminPanel({
       }
     }
 
+    const newName = editValues['Name'] || undefined;
+
+    // Did the Address change? If so, geocode and confirm before moving the pin.
+    const addrField = expandedFields.find(isAddressField);
+    const origAddr = addrField ? String(expandedRawAttrs?.[addrField.name] ?? '') : '';
+    const newAddr = addrField ? (editValues[addrField.name] ?? '').trim() : '';
+    const addrChanged = !!addrField && newAddr !== '' && newAddr !== origAddr.trim();
+
+    if (!addrChanged) {
+      await commitAttrs(facilityId, attributes, newName);
+      return;
+    }
+
+    setIsSavingAttrs(true);
+    let geo: GeocodeResult | null = null;
     try {
-      const session = await fetchAuthSession();
-      const tok = session.tokens?.idToken?.toString() ?? '';
-      const res = await fetch(`${resolvedApiBase}facility/update-attributes`, {
-        method: 'POST',
-        headers: { Authorization: tok, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ objectId: facilityId, attributes }),
-      });
-      if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        throw new Error(err.error ?? `HTTP ${res.status}`);
-      }
-
-      // Update the displayed Name if it changed
-      const newName = editValues['Name'];
-      if (newName) {
-        setFacilities((prev) =>
-          prev.map((f) => f.ObjectID === facilityId ? { ...f, Name: newName, EditDate: Date.now() } : f),
-        );
-      }
-
-      setExpandedId(null);
-      setExpandedRawAttrs(null);
-      setEditValues({});
-      setAnnouncement(t('admin.editFacility.saveSuccess'));
+      geo = await geocodeAddress(newAddr);
     } catch (err) {
-      console.error('saveAttrs error:', err);
-      setSaveAttrsError(t('admin.editFacility.saveError'));
-      setAnnouncement(t('admin.editFacility.saveError'));
+      console.error('geocode error:', err);
     } finally {
       setIsSavingAttrs(false);
     }
-  }, [expandedFields, editValues, t]);
+    // Open the confirmation dialog (geo may be null → "couldn't locate" path).
+    setPendingAddrSave({ facilityId, attributes, newName, geo });
+  }, [expandedFields, expandedRawAttrs, editValues, commitAttrs]);
+
+  const handleAddrCancel = useCallback(() => {
+    addrDialogRef.current?.close();
+    setPendingAddrSave(null);
+  }, []);
+
+  // Confirm from the dialog: move the pin when a match was found, else save text only.
+  const handleAddrConfirm = useCallback(async (movePin: boolean) => {
+    if (!pendingAddrSave) return;
+    const { facilityId, attributes, newName, geo } = pendingAddrSave;
+    const geometry = movePin && geo
+      ? { x: geo.x, y: geo.y, spatialReference: { wkid: 4326 } }
+      : undefined;
+    addrDialogRef.current?.close();
+    setPendingAddrSave(null);
+    await commitAttrs(facilityId, attributes, newName, geometry);
+  }, [pendingAddrSave, commitAttrs]);
 
   const handleNotifOpen = useCallback(async (facilityId: number) => {
     if (notifExpandedId === facilityId) {
@@ -999,6 +1102,75 @@ export default function AdminPanel({
             {t('admin.deleteFacility.confirmYes')}
           </button>
         </div>
+      </dialog>
+
+      {/* Address changed → move map pin confirmation */}
+      <dialog
+        ref={addrDialogRef}
+        className={styles.dialog}
+        aria-modal="true"
+        aria-labelledby="addr-dialog-title"
+      >
+        <h2 id="addr-dialog-title" className={styles.dialogTitle}>
+          {t('admin.editFacility.movePinTitle')}
+        </h2>
+        {pendingAddrSave?.geo ? (
+          <>
+            <p className={styles.dialogMessage}>
+              {t('admin.editFacility.movePinMessage')}
+            </p>
+            <p className={styles.dialogMessage}>
+              <strong>{pendingAddrSave.geo.matchAddr}</strong>
+            </p>
+            <div className={styles.dialogActions}>
+              <button
+                type="button"
+                ref={addrCancelBtnRef}
+                onClick={handleAddrCancel}
+                className={styles.btnSecondary}
+              >
+                {t('admin.panel.confirmNo')}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleAddrConfirm(false)}
+                className={styles.btnSecondary}
+              >
+                {t('admin.editFacility.saveTextOnly')}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleAddrConfirm(true)}
+                className={styles.btnPrimary}
+              >
+                {t('admin.editFacility.movePinConfirm')}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className={styles.dialogMessage}>
+              {t('admin.editFacility.movePinNotFound')}
+            </p>
+            <div className={styles.dialogActions}>
+              <button
+                type="button"
+                ref={addrCancelBtnRef}
+                onClick={handleAddrCancel}
+                className={styles.btnSecondary}
+              >
+                {t('admin.panel.confirmNo')}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleAddrConfirm(false)}
+                className={styles.btnPrimary}
+              >
+                {t('admin.editFacility.saveTextOnly')}
+              </button>
+            </div>
+          </>
+        )}
       </dialog>
 
       <AddFacilityModal
