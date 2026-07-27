@@ -304,7 +304,12 @@
       "saveSuccess": "Facility updated successfully.",
       "saveError": "Failed to update facility. Please try again.",
       "loading": "Loading facility data…",
-      "loadError": "Failed to load facility data. Please try again."
+      "loadError": "Failed to load facility data. Please try again.",
+      "movePinTitle": "Update map location?",
+      "movePinMessage": "The address changed. Move this facility's map pin and driving directions to the location below?",
+      "movePinConfirm": "Move Pin & Save",
+      "movePinNotFound": "Couldn't find map coordinates for the new address. Save the address text without moving the map pin? Directions will still point to the old location.",
+      "saveTextOnly": "Save Text Only"
     },
     "notifications": {
       "link": "Set Notifications",

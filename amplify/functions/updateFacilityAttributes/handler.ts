@@ -6,6 +6,7 @@ const ARCGIS_FEATURE_LAYER_URL = process.env.ARCGIS_FEATURE_LAYER_URL!;
 interface UpdateAttributesBody {
   objectId: number;
   attributes: Record<string, string | number | boolean | null>;
+  geometry?: { x: number; y: number; spatialReference: { wkid: number } };
 }
 
 interface ArcGISApplyEditsResponse {
@@ -39,10 +40,14 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { objectId, attributes } = body;
+  const { objectId, attributes, geometry } = body;
 
   if (typeof objectId !== 'number' || !attributes || typeof attributes !== 'object') {
     return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Invalid parameters' }) };
+  }
+
+  if (geometry && (typeof geometry.x !== 'number' || typeof geometry.y !== 'number')) {
+    return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Invalid geometry' }) };
   }
 
   if (!allowedIds.includes(String(objectId))) {
@@ -52,7 +57,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   try {
     const token = await getArcGISToken();
 
-    const updates = JSON.stringify([{ attributes: { OBJECTID: objectId, ...attributes } }]);
+    // Moving geometry alongside attributes keeps the map pin — and therefore the
+    // Get Directions coordinates — in sync with the edited Address in one atomic edit.
+    const edit: { attributes: Record<string, unknown>; geometry?: typeof geometry } = {
+      attributes: { OBJECTID: objectId, ...attributes },
+    };
+    if (geometry) edit.geometry = geometry;
+    const updates = JSON.stringify([edit]);
     const applyRes = await fetch(`${ARCGIS_FEATURE_LAYER_URL}/applyEdits`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
