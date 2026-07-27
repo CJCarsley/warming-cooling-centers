@@ -173,6 +173,23 @@ export default function AdminPanel({
   const updatePopupBtnRef = useRef<HTMLButtonElement>(null);
   const firstEditFieldRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
 
+  // Authorized API call with stale-token self-heal: the cached id token's
+  // custom:facility_ids claim can lag a recent grant → 403. On a 403, force-refresh
+  // the token once and retry so the claim catches up.
+  const authedFetch = useCallback(async (path: string, init: RequestInit = {}) => {
+    const send = async (forceRefresh: boolean) => {
+      const session = await fetchAuthSession(forceRefresh ? { forceRefresh: true } : undefined);
+      const tok = session.tokens?.idToken?.toString() ?? '';
+      return fetch(`${resolvedApiBase}${path}`, {
+        ...init,
+        headers: { ...(init.headers ?? {}), Authorization: tok },
+      });
+    };
+    let res = await send(false);
+    if (res.status === 403) res = await send(true);
+    return res;
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -216,9 +233,7 @@ export default function AdminPanel({
           if (!cancelled) setFacilities((data.features ?? []).map((f) => f.attributes));
         }
 
-        const keepOpenRes = await fetch(`${resolvedApiBase}facilities/keep-open`, {
-          headers: { Authorization: tok },
-        });
+        const keepOpenRes = await authedFetch('facilities/keep-open');
         if (keepOpenRes.ok) {
           const keepOpenData = (await keepOpenRes.json()) as { keepOpenIds: number[] };
           if (!cancelled) setKeepOpenIds(new Set(keepOpenData.keepOpenIds));
@@ -236,7 +251,7 @@ export default function AdminPanel({
 
     void loadFacilities();
     return () => { cancelled = true; };
-  }, [userEmail, t]);
+  }, [userEmail, authedFetch, t]);
 
   useEffect(() => {
     if (pendingToggle) {
@@ -287,20 +302,6 @@ export default function AdminPanel({
   // Authorized API call with stale-token self-heal: the cached id token's
   // custom:facility_ids claim can lag a recent grant → 403. On a 403, force-refresh
   // the token once and retry so the claim catches up.
-  const authedFetch = useCallback(async (path: string, init: RequestInit = {}) => {
-    const send = async (forceRefresh: boolean) => {
-      const session = await fetchAuthSession(forceRefresh ? { forceRefresh: true } : undefined);
-      const tok = session.tokens?.idToken?.toString() ?? '';
-      return fetch(`${resolvedApiBase}${path}`, {
-        ...init,
-        headers: { ...(init.headers ?? {}), Authorization: tok },
-      });
-    };
-    let res = await send(false);
-    if (res.status === 403) res = await send(true);
-    return res;
-  }, []);
-
   const handleConfirm = useCallback(async () => {
     if (!pendingToggle) return;
     const { facilityId, field, newValue, clearField } = pendingToggle;
@@ -605,12 +606,7 @@ export default function AdminPanel({
     setNotifSaveError(null);
     setIsNotifLoading(true);
     try {
-      const session = await fetchAuthSession();
-      const tok = session.tokens?.idToken?.toString() ?? '';
-      const res = await fetch(
-        `${resolvedApiBase}facilities/notifications?facilityId=${facilityId}`,
-        { headers: { Authorization: tok } },
-      );
+      const res = await authedFetch(`facilities/notifications?facilityId=${facilityId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { notificationEmails: string };
       setNotifEmails(data.notificationEmails ?? '');
@@ -620,17 +616,15 @@ export default function AdminPanel({
     } finally {
       setIsNotifLoading(false);
     }
-  }, [notifExpandedId, expandedId, t]);
+  }, [notifExpandedId, expandedId, authedFetch, t]);
 
   const handleSaveNotifications = useCallback(async (facilityId: number) => {
     setIsNotifSaving(true);
     setNotifSaveError(null);
     try {
-      const session = await fetchAuthSession();
-      const tok = session.tokens?.idToken?.toString() ?? '';
-      const res = await fetch(`${resolvedApiBase}facilities/notifications`, {
+      const res = await authedFetch('facilities/notifications', {
         method: 'PATCH',
-        headers: { Authorization: tok, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ facilityId, emails: notifEmails }),
       });
       if (!res.ok) {
@@ -645,7 +639,7 @@ export default function AdminPanel({
     } finally {
       setIsNotifSaving(false);
     }
-  }, [notifEmails, t]);
+  }, [notifEmails, authedFetch, t]);
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!pendingDelete) return;
